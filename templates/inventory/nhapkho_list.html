@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Danh sách nhập kho{% endblock %}
+{% block page_title %}📥 Danh sách phiếu nhập kho{% endblock %}
+
+{% block content %}
+<div class="card table-custom">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Phiếu nhập kho</h5>
+        <a href="{% url 'nhap_kho_create' %}" class="btn btn-primary-custom">
+            <i class="fas fa-plus me-2"></i>Tạo phiếu nhập
+        </a>
+    </div>
+    <div class="card-body">
+        <!-- Filter Section -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <input type="date" class="form-control" placeholder="Từ ngày">
+            </div>
+            <div class="col-md-3">
+                <input type="date" class="form-control" placeholder="Đến ngày">
+            </div>
+            <div class="col-md-4">
+                <input type="text" class="form-control" placeholder="Tìm theo mã phiếu, nhà cung cấp...">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-primary w-100">
+                    <i class="fas fa-search me-1"></i>Lọc
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã phiếu</th>
+                        <th>Ngày nhập</th>
+                        <th>Nhà cung cấp</th>
+                        <th>Số sản phẩm</th>
+                        <th>Tổng tiền</th>
+                        <th>Người lập</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for phieu in phieu_nhap %}
+                    <tr>
+                        <td>
+                            <strong class="text-primary">{{ phieu.ma_phieu }}</strong>
+                        </td>
+                        <td>{{ phieu.ngay_nhap|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <div class="fw-bold">{{ phieu.nha_cung_cap.ten_nha_cung_cap }}</div>
+                            <small class="text-muted">{{ phieu.nha_cung_cap.dien_thoai }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info rounded-pill">
+                                {{ phieu.chi_tiet_nhap.count }} SP
+                            </span>
+                        </td>
+                        <td class="fw-bold text-success">{{ phieu.tong_tien|floatformat:0 }}₫</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                     style="width: 30px; height: 30px;">
+                                    <i class="fas fa-user text-white small"></i>
+                                </div>
+                                <span>{{ phieu.nguoi_lap.username }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-success rounded-pill">
+                                <i class="fas fa-check me-1"></i>Hoàn thành
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{% url 'nhap_kho_detail' phieu.pk %}" class="btn btn-sm btn-info" 
+                                   data-bs-toggle="tooltip" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="In phiếu">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                                <button class="btn btn-sm btn-danger" data-bs-toggle="tooltip" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+                            <br>
+                            <h5>Chưa có phiếu nhập kho nào</h5>
+                            <p class="mb-3">Hãy tạo phiếu nhập kho đầu tiên để quản lý hàng hóa</p>
+                            <a href="{% url 'nhap_kho_create' %}" class="btn btn-primary-custom">
+                                <i class="fas fa-plus me-2"></i>Tạo phiếu nhập đầu tiên
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if phieu_nhap %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#">Trước</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#">Tiếp</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mt-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Tổng phiếu nhập</div>
+                        <div class="h4">{{ phieu_nhap.count }}</div>
+                    </div>
+                    <i class="fas fa-clipboard-list fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Tổng giá trị</div>
+                        <div class="h4">
+                            {% if phieu_nhap %}
+                                {% with max_phieu=phieu_nhap|first %}
+                                    {{ max_phieu.tong_tien|default:0|floatformat:0 }}₫
+                                {% endwith %}
+                            {% else %}
+                                0₫
+                            {% endif %}
+                        </div>
+                    </div>
+                    <i class="fas fa-dollar-sign fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Nhà cung cấp</div>
+                        <div class="h4">
+                            {{ phieu_nhap.count }}
+                        </div>
+                    </div>
+                    <i class="fas fa-truck fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Tháng này</div>
+                        <div class="h4">
+                            {{ phieu_nhap.count }}
+                        </div>
+                    </div>
+                    <i class="fas fa-calendar-alt fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

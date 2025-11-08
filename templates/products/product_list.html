@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Sản phẩm - Warehouse Management{% endblock %}
+{% block page_title %}Quản lý sản phẩm{% endblock %}
+
+{% block content %}
+<div class="card shadow">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Danh sách sản phẩm</h5>
+        <a href="{% url 'product_create' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i> Thêm sản phẩm
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Mã SP</th>
+                        <th>Tên sản phẩm</th>
+                        <th>Danh mục</th>
+                        <th>Giá nhập</th>
+                        <th>Giá bán</th>
+                        <th>Tồn kho</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>{{ product.ma_san_pham }}</td>
+                        <td>{{ product.ten_san_pham }}</td>
+                        <td>{{ product.danh_muc.ten_danh_muc }}</td>
+                        <td>{{ product.gia_nhap|floatformat:0 }}đ</td>
+                        <td>{{ product.gia_ban|floatformat:0 }}đ</td>
+                        <td>{{ product.ton_kho }}</td>
+                        <td>
+                            {% if product.trang_thai %}
+                                <span class="badge bg-success">Đang bán</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Ngừng bán</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'product_edit' product.id %}" class="btn btn-sm btn-warning me-1">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'product_delete' product.id %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">Chưa có sản phẩm nào.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

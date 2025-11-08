@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block title %}Báo cáo tổng quan{% endblock %}
+{% block page_title %}📊 Báo cáo tổng quan{% endblock %}
+
+{% block content %}
+<!-- Thống kê nhanh -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Tổng sản phẩm</div>
+                        <div class="h4">{{ total_products }}</div>
+                    </div>
+                    <i class="fas fa-boxes fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Nhà cung cấp</div>
+                        <div class="h4">{{ total_suppliers }}</div>
+                    </div>
+                    <i class="fas fa-truck fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Khách hàng</div>
+                        <div class="h4">{{ total_customers }}</div>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Tổng tồn kho</div>
+                        <div class="h4">{{ inventory_stats.total_inventory|default:0 }}</div>
+                    </div>
+                    <i class="fas fa-warehouse fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Sản phẩm tồn kho nhiều -->
+    <div class="col-lg-6 mb-4">
+        <div class="card table-custom">
+            <div class="card-header">
+                <h6 class="card-title mb-0">📦 Top sản phẩm tồn kho</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Tồn kho</th>
+                                <th>Giá bán</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>{{ product.ten_san_pham }}</td>
+                                <td>
+                                    <span class="badge bg-primary rounded-pill">{{ product.ton_kho }}</span>
+                                </td>
+                                <td>{{ product.gia_ban|floatformat:0 }}₫</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sản phẩm sắp hết hàng -->
+    <div class="col-lg-6 mb-4">
+        <div class="card table-custom">
+            <div class="card-header">
+                <h6 class="card-title mb-0">⚠️ Sản phẩm sắp hết hàng</h6>
+            </div>
+            <div class="card-body">
+                {% if low_stock_products %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Tồn kho</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in low_stock_products %}
+                            <tr>
+                                <td>{{ product.ten_san_pham }}</td>
+                                <td>
+                                    <span class="badge bg-danger rounded-pill">{{ product.ton_kho }}</span>
+                                </td>
+                                <td>
+                                    {% if product.ton_kho < 5 %}
+                                    <span class="badge bg-danger">Rất thấp</span>
+                                    {% else %}
+                                    <span class="badge bg-warning">Thấp</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <br>Không có sản phẩm nào sắp hết hàng
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Thống kê tài chính -->
+    <div class="col-12">
+        <div class="card table-custom">
+            <div class="card-header">
+                <h6 class="card-title mb-0">💰 Thống kê tài chính tháng</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <div class="h3 text-success">{{ monthly_import|floatformat:0 }}₫</div>
+                            <small class="text-muted">Tổng nhập kho</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <div class="h3 text-primary">{{ monthly_export|floatformat:0 }}₫</div>
+                            <small class="text-muted">Tổng xuất kho</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div>
+                            <div class="h3 text-info">{{ inventory_stats.avg_price|floatformat:0 }}₫</div>
+                            <small class="text-muted">Giá bán trung bình</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

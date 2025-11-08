@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}Nhà cung cấp{% endblock %}
+{% block page_title %}🏭 Quản lý nhà cung cấp{% endblock %}
+
+{% block content %}
+<div class="card table-custom">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Danh sách nhà cung cấp</h5>
+        <a href="{% url 'supplier_create' %}" class="btn btn-primary-custom">
+            <i class="fas fa-plus me-2"></i>Thêm nhà cung cấp
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Mã NCC</th>
+                        <th>Tên nhà cung cấp</th>
+                        <th>Điện thoại</th>
+                        <th>Email</th>
+                        <th>Địa chỉ</th>
+                        <th>Ngày tạo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for supplier in suppliers %}
+                    <tr>
+                        <td><strong>{{ supplier.ma_nha_cung_cap }}</strong></td>
+                        <td>{{ supplier.ten_nha_cung_cap }}</td>
+                        <td>{{ supplier.dien_thoai }}</td>
+                        <td>{{ supplier.email|default:"-" }}</td>
+                        <td>{{ supplier.dia_cha|truncatewords:5 }}</td>
+                        <td>{{ supplier.ngay_tao|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fas fa-truck fa-2x mb-3"></i>
+                            <br>Chưa có nhà cung cấp nào
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
