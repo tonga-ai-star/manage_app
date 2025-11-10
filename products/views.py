@@ -1,7 +1,8 @@
+# views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import SanPham
-from .forms import SanPhamForm
+from .models import SanPham, DanhMucSanPham, DonViTinh  # ← Import model
+from .forms import SanPhamForm, DanhMucForm, DonViTinhForm
 
 @login_required
 def product_list(request):
@@ -38,21 +39,46 @@ def product_delete(request, pk):
         product.delete()
         return redirect('product_list')
     return render(request, 'products/product_confirm_delete.html', {'product': product})
+
+# SỬA: LẤY TỪ DB, KHÔNG DÙNG DỮ LIỆU CỨNG
 @login_required
 def category_list(request):
-    categories = [
-        {'id': 1, 'name': 'Xi măng'},
-        {'id': 2, 'name': 'Cát đá'},
-        {'id': 3, 'name': 'Thép'},
-        {'id': 4, 'name': 'Gạch ống'},
-    ]
+    categories = DanhMucSanPham.objects.all()  # ← Lấy thật từ DB
     return render(request, 'products/category_list.html', {'categories': categories})
+
+@login_required
 def unit_list(request):
-    units = [
-        {'id': 1, 'name': 'Bao'},
-        {'id': 2, 'name': 'Kg'},
-        {'id': 3, 'name': 'Tấn'},
-        {'id': 4, 'name': 'Khối'},
-        {'id': 5, 'name': 'Viên'},
-    ]
+    units = DonViTinh.objects.all()  # ← Lấy thật từ DB
     return render(request, 'products/unit_list.html', {'units': units})
+
+
+@login_required
+def category_create(request):
+    if request.method == 'POST':
+        form = DanhMucForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('category_list')
+    else:
+        form = DanhMucForm()
+
+    return render(request, 'products/category_form.html', {
+        'form': form,
+        'title': 'Thêm danh mục mới'
+    })
+
+
+@login_required
+def unit_create(request):
+    if request.method == 'POST':
+        form = DonViTinhForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('unit_list')
+    else:
+        form = DonViTinhForm()
+
+    return render(request, 'products/unit_form.html', {
+        'form': form,
+        'title': 'Thêm đơn vị tính'
+    })

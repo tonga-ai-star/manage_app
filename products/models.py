@@ -14,6 +14,7 @@ class DanhMucSanPham(models.Model):
 class DonViTinh(models.Model):
     ten_don_vi = models.CharField(max_length=50)
     mo_ta = models.TextField(blank=True, null=True)
+    trang_thai = models.BooleanField(default=True)
     def __str__(self):
         return self.ten_don_vi
     class Meta:

@@ -7,7 +7,7 @@
 <div class="card shadow">
   <div class="card-header d-flex justify-content-between align-items-center">
     <h5 class="card-title mb-0">Danh sách danh mục</h5>
-    <a href="#" class="btn btn-primary btn-sm">
+    <a href="{% url 'category_create' %}" class="btn btn-primary btn-sm">
       <i class="fas fa-plus me-1"></i> Thêm danh mục
     </a>
   </div>
@@ -23,7 +23,7 @@
         {% for c in categories %}
         <tr>
           <td>{{ c.id }}</td>
-          <td>{{ c.name }}</td>
+          <td>{{ c.ten_danh_muc }}</td>
         </tr>
         {% endfor %}
       </tbody>

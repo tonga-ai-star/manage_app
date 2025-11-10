@@ -8,7 +8,7 @@
 <div class="card table-custom">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Phiếu nhập kho</h5>
-        <a href="{% url 'nhap_kho_create' %}" class="btn btn-primary-custom">
+        <a href="{% url 'inventory:nhap_kho_create' %}" class="btn btn-primary-custom">
             <i class="fas fa-plus me-2"></i>Tạo phiếu nhập
         </a>
     </div>
@@ -98,7 +98,7 @@
                             <br>
                             <h5>Chưa có phiếu nhập kho nào</h5>
                             <p class="mb-3">Hãy tạo phiếu nhập kho đầu tiên để quản lý hàng hóa</p>
-                            <a href="{% url 'nhap_kho_create' %}" class="btn btn-primary-custom">
+                            <a href="{% url 'inventory:nhap_kho_create' %}" class="btn btn-primary-custom">
                                 <i class="fas fa-plus me-2"></i>Tạo phiếu nhập đầu tiên
                             </a>
                         </td>
