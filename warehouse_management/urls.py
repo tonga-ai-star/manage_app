@@ -10,6 +10,7 @@ urlpatterns = [
     path('kho/', include('inventory.urls')),
     path('doi-tac/', include('partners.urls')),
     path('bao-cao/', include('reports.urls')),
+    path('kiem-ke/', include('inventory.urls')),
 ]
 
 if settings.DEBUG:

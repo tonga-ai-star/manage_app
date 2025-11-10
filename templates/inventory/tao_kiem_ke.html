@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tạo Kiểm Kê Mới{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Tạo Đợt Kiểm Kê Mới</h1>
+        <a href="{% url 'inventory:danh_sach_kiem_ke' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại danh sách
+        </a>
+    </div>
+
+    <!-- Form tạo kiểm kê -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Thông tin đợt kiểm kê</h6>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="kiemKeForm">
+                        {% csrf_token %}
+                        
+                        {% if messages %}
+                        <div class="alert-container">
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="ma_kiem_ke" class="font-weight-bold">Mã kiểm kê *</label>
+                                    <input type="text" class="form-control" id="ma_kiem_ke" name="ma_kiem_ke" 
+                                           required placeholder="VD: KK2025111001">
+                                    <small class="form-text text-muted">Mã duy nhất để nhận diện đợt kiểm kê</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="ngay_kiem_ke" class="font-weight-bold">Ngày kiểm kê *</label>
+                                    <input type="datetime-local" class="form-control" id="ngay_kiem_ke" 
+                                           name="ngay_kiem_ke" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ten_dot_kiem_ke" class="font-weight-bold">Tên đợt kiểm kê *</label>
+                            <input type="text" class="form-control" id="ten_dot_kiem_ke" name="ten_dot_kiem_ke" 
+                                   required placeholder="VD: Kiểm kê cuối tháng 11/2025">
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="kho" class="font-weight-bold">Kho kiểm kê *</label>
+                                    <select class="form-control" id="kho" name="kho" required>
+                                        <option value="">-- Chọn kho --</option>
+                                        <option value="Kho chính">Kho chính</option>
+                                        <option value="Kho phụ">Kho phụ</option>
+                                        <option value="Kho lưu trữ">Kho lưu trữ</option>
+                                        <option value="Kho tạm">Kho tạm</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="font-weight-bold">Người phụ trách</label>
+                                    <input type="text" class="form-control" value="{{ user.get_full_name }}" 
+                                           readonly style="background-color: #f8f9fa;">
+                                    <small class="form-text text-muted">Tự động lấy thông tin người đăng nhập</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="mo_ta" class="font-weight-bold">Mô tả</label>
+                            <textarea class="form-control" id="mo_ta" name="mo_ta" rows="3" 
+                                      placeholder="Mô tả chi tiết về đợt kiểm kê..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="xac_nhan" required>
+                                <label class="form-check-label" for="xac_nhan">
+                                    Tôi xác nhận thông tin trên là chính xác
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus-circle"></i> Tạo Đợt Kiểm Kê
+                            </button>
+                            <a href="{% url 'inventory:danh_sach_kiem_ke' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar hướng dẫn -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">
+                        <i class="fas fa-info-circle"></i> Hướng dẫn
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb"></i> Quy trình kiểm kê:</h6>
+                        <ol class="pl-3 mb-0">
+                            <li>Tạo đợt kiểm kê mới</li>
+                            <li>Nhập số lượng thực tế từng sản phẩm</li>
+                            <li>Hệ thống tự tính chênh lệch</li>
+                            <li>Xác nhận hoàn thành kiểm kê</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Lưu ý:</h6>
+                        <ul class="pl-3 mb-0">
+                            <li>Mã kiểm kê phải là duy nhất</li>
+                            <li>Kiểm tra kỹ thông tin trước khi tạo</li>
+                            <li>Chỉ có thể chỉnh sửa khi ở trạng thái "Chờ"</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thông tin nhanh -->
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-success">
+                        <i class="fas fa-chart-bar"></i> Thống kê nhanh
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="card border-left-primary h-100 py-2">
+                                <div class="card-body">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                        Tổng sản phẩm
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="tongSanPham">0</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <div class="card border-left-success h-100 py-2">
+                                <div class="card-body">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                        Kiểm kê hôm nay
+                                    </div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="kiemKeHomNay">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+$(document).ready(function() {
+    // Tự động tạo mã kiểm kê
+    function generateMaKiemKe() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+        return `KK${year}${month}${day}${random}`;
+    }
+
+    // Đặt mã kiểm kê mặc định
+    $('#ma_kiem_ke').val(generateMaKiemKe());
+
+    // Đặt ngày mặc định là hiện tại
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    $('#ngay_kiem_ke').val(now.toISOString().slice(0, 16));
+
+    // Lấy thống kê
+    function loadThongKe() {
+        // Giả lập dữ liệu - bạn có thể thay bằng API thực tế
+        $('#tongSanPham').text('125');
+        $('#kiemKeHomNay').text('3');
+    }
+
+    loadThongKe();
+
+    // Xác thực form
+    $('#kiemKeForm').on('submit', function(e) {
+        const maKiemKe = $('#ma_kiem_ke').val();
+        const tenKiemKe = $('#ten_dot_kiem_ke').val();
+        const kho = $('#kho').val();
+        const xacNhan = $('#xac_nhan').is(':checked');
+
+        if (!xacNhan) {
+            e.preventDefault();
+            alert('Vui lòng xác nhận thông tin trước khi tạo kiểm kê!');
+            return false;
+        }
+
+        if (!maKiemKe || !tenKiemKe || !kho) {
+            e.preventDefault();
+            alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
+            return false;
+        }
+    });
+
+    // Hiệu ứng loading khi submit
+    $('#kiemKeForm').on('submit', function() {
+        $('button[type="submit"]').html('<i class="fas fa-spinner fa-spin"></i> Đang tạo...').prop('disabled', true);
+    });
+});
+</script>
+{% endblock %}

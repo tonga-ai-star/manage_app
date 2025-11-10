@@ -86,6 +86,9 @@ class XuatKhoForm(forms.ModelForm):
             'ghi_chu': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)  # lấy ra user, tránh lỗi
+        super().__init__(*args, **kwargs)
 
 class ChiTietXuatKhoForm(forms.ModelForm):
     """Form chi tiết phiếu xuất"""

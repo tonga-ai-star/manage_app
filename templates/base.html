@@ -162,19 +162,22 @@
                 </a>
 
                 <a class="nav-link {% if 'nhap' in request.path %}active{% endif %}"
-                   href="{% url 'danh_sach_nhap' %}">
+                   href="{% url 'inventory:danh_sach_nhap' %}">
                     <i class="fas fa-arrow-down me-3"></i>Nhập kho
                 </a>
 
                 <a class="nav-link {% if 'xuat' in request.path %}active{% endif %}"
-                   href="{% url 'danh_sach_xuat' %}">
+                   href="{% url 'inventory:danh_sach_xuat' %}">
                     <i class="fas fa-arrow-up me-3"></i>Xuất kho
                 </a>
 
                 <a class="nav-link" href="/doi-tac/nha-cung-cap/">
                     <i class="fas fa-truck me-3"></i>Nhà cung cấp
                 </a>
-
+                <a class="nav-link" href="{% url 'inventory:danh_sach_kiem_ke' %}">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span>Kiểm kê kho</span>
+                </a>
             </nav>
 
             <div class="sidebar-footer mt-auto p-3">

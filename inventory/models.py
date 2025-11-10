@@ -5,6 +5,8 @@ from products.models import SanPham
 from partners.models import NhaCungCap, KhachHang
 from django.db.models import Sum
 from decimal import Decimal
+from django.contrib.auth.models import User
+
 
 
 
@@ -148,30 +150,57 @@ class ChiTietXuatKho(models.Model):
         verbose_name = "Chi tiết xuất kho"
         verbose_name_plural = "Chi tiết xuất kho"
 
-# kiem ke model
+
+from django.db import models
+from django.conf import settings  # Thêm dòng này
+from products.models import SanPham  # Import model sản phẩm từ app products
+
+
 class KiemKe(models.Model):
-    ma_kiem_ke = models.CharField(max_length=50, unique=True)
-    ngay_kiem_ke = models.DateTimeField(auto_now_add=True)
-    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    trang_thai = models.CharField(max_length=50,choices={
-        ('chua_kiem_ke','Chưa Kiểm Kê'),
-        ('dang_kiem_ke', 'Đang Kiểm Kê'),
-        ('da_kiem_ke', 'Đã Kiểm Kê')
-    },default='chua_kiem_ke')
-    ghi_chu = models.TextField(blank=True, null=True)
+    TRANG_THAI_CHON = [
+        ('cho', 'Chờ'),
+        ('dang_kiem_ke', 'Đang kiểm kê'),
+        ('hoan_thanh', 'Hoàn thành'),
+        ('huy', 'Hủy'),
+    ]
+
+    ma_kiem_ke = models.CharField(max_length=50, unique=True, verbose_name="Mã kiểm kê")
+    ten_dot_kiem_ke = models.CharField(max_length=200, verbose_name="Tên đợt kiểm kê")
+    ngay_kiem_ke = models.DateTimeField(verbose_name="Ngày kiểm kê")
+    kho = models.CharField(max_length=100, verbose_name="Kho kiểm kê")
+    nguoi_phu_trach = models.ForeignKey(
+        settings.AUTH_USER_MODEL,  # Sửa thành này
+        on_delete=models.CASCADE,
+        verbose_name="Người phụ trách"
+    )
+    trang_thai = models.CharField(max_length=20, choices=TRANG_THAI_CHON, default='cho', verbose_name="Trạng thái")
+    mo_ta = models.TextField(blank=True, verbose_name="Mô tả")
+    ngay_tao = models.DateTimeField(auto_now_add=True)
+    ngay_cap_nhat = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Kiểm kê"
+        verbose_name_plural = "Kiểm kê"
 
     def __str__(self):
-        return self.ma_kiem_ke
+        return f"{self.ma_kiem_ke} - {self.ten_dot_kiem_ke}"
 
-# chi tiet kiem ke
+
 class ChiTietKiemKe(models.Model):
-    ma_kiem_ke = models.ForeignKey(KiemKe, on_delete=models.CASCADE)
-    ma_san_pham = models.ForeignKey(SanPham, on_delete=models.CASCADE)
-    so_luong_he_thong = models.IntegerField(validators=[MinValueValidator(1)])
-    so_luong_thuc_te = models.IntegerField(validators=[MinValueValidator(1)])
-    chenh_lech = models.IntegerField()
-    ly_do = models.TextField(blank=True, null=True)
-    ghi_chu = models.TextField(blank=True, null=True)
+    kiem_ke = models.ForeignKey(KiemKe, on_delete=models.CASCADE, related_name='chi_tiet', verbose_name="Đợt kiểm kê")
+    san_pham = models.ForeignKey(SanPham, on_delete=models.CASCADE, verbose_name="Sản phẩm")
+    so_luong_he_thong = models.IntegerField(verbose_name="Số lượng hệ thống")
+    so_luong_thuc_te = models.IntegerField(verbose_name="Số lượng thực tế")
+    chenh_lech = models.IntegerField(default=0, verbose_name="Chênh lệch")
+    ghi_chu = models.TextField(blank=True, verbose_name="Ghi chú")
+
+    class Meta:
+        verbose_name = "Chi tiết kiểm kê"
+        verbose_name_plural = "Chi tiết kiểm kê"
+
+    def save(self, *args, **kwargs):
+        self.chenh_lech = self.so_luong_thuc_te - self.so_luong_he_thong
+        super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.ma_kiem_ke
+        return f"{self.san_pham.ten_san_pham} - {self.chenh_lech}"
