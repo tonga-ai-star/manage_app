@@ -3,8 +3,8 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from products.models import SanPham
-from inventory.models import NhapKho, XuatKho  # ĐÃ SỬA TÊN
-from partners.models import NhaCungCap, KhachHang
+from inventory.models import NhapKho, XuatKho
+from partners.models import NhaCungCap
 
 
 # @login_required

@@ -1,25 +1,23 @@
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Count, Avg
+from django.db.models import Sum, Count, Avg, Q
 from django.utils import timezone
 from datetime import timedelta
 from products.models import SanPham
 from inventory.models import NhapKho, XuatKho  # ĐÃ SỬA TÊN
-from partners.models import NhaCungCap, KhachHang
-
+from partners.models import NhaCungCap
 @login_required
 def reports_dashboard(request):
     # Thống kê cơ bản
     total_products = SanPham.objects.count()
     total_suppliers = NhaCungCap.objects.count()
-    total_customers = KhachHang.objects.count()
 
     # Thống kê tồn kho
     inventory_stats = SanPham.objects.aggregate(
         total_inventory=Sum('ton_kho'),
         avg_price=Avg('gia_ban'),
-        low_stock=Count('id', filter=models.Q(ton_kho__lt=10))
+        low_stock=Count('id', filter= Q(ton_kho__lt=10))
     )
 
     # Thống kê nhập xuất tháng
@@ -43,7 +41,6 @@ def reports_dashboard(request):
     context = {
         'total_products': total_products,
         'total_suppliers': total_suppliers,
-        'total_customers': total_customers,
         'inventory_stats': inventory_stats,
         'monthly_import': monthly_import,
         'monthly_export': monthly_export,

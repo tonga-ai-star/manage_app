@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import NhapKho, ChiTietNhapKho, XuatKho, ChiTietXuatKho
 from .models import KiemKe, ChiTietKiemKe
+from .models import Kho, TonKho
 class ChiTietNhapKhoInline(admin.TabularInline):
     model = ChiTietNhapKho
     extra = 1
@@ -22,9 +23,9 @@ class ChiTietXuatKhoInline(admin.TabularInline):
 
 @admin.register(XuatKho)
 class XuatKhoAdmin(admin.ModelAdmin):
-    list_display = ['ma_phieu', 'ngay_xuat', 'khach_hang', 'tong_tien', 'nguoi_lap']
-    list_filter = ['ngay_xuat', 'khach_hang']
-    search_fields = ['ma_phieu', 'khach_hang__ten_khach_hang']
+    list_display = ['ma_phieu', 'ngay_xuat', 'kho', 'tong_tien', 'nguoi_lap']
+    list_filter = ['ngay_xuat', 'kho']
+    search_fields = ['ma_phieu']
     inlines = [ChiTietXuatKhoInline]
 
 @admin.register(ChiTietNhapKho)
@@ -53,3 +54,15 @@ class KiemKeAdmin(admin.ModelAdmin):
 class ChiTietKiemKeAdmin(admin.ModelAdmin):
     list_display = ['kiem_ke', 'san_pham', 'so_luong_he_thong', 'so_luong_thuc_te', 'chenh_lech']
     list_filter = ['kiem_ke']
+@admin.register(Kho)
+class KhoAdmin(admin.ModelAdmin):
+    list_display = ['ma_kho', 'ten_kho', 'dia_chi', 'nguoi_quan_ly', 'trang_thai']
+    list_filter = ['trang_thai']
+    search_fields = ['ma_kho', 'ten_kho', 'dia_chi']
+    list_editable = ['trang_thai']
+
+@admin.register(TonKho)
+class TonKhoAdmin(admin.ModelAdmin):
+    list_display = ['kho', 'san_pham', 'so_luong_ton', 'so_luong_kha_dung', 'ngay_cap_nhat']
+    list_filter = ['kho', 'san_pham']
+    search_fields = ['kho__ten_kho', 'san_pham__ten_san_pham']

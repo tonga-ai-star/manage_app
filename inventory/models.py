@@ -2,16 +2,64 @@ from django.db import models
 from django.conf import settings  # THÊM DÒNG NÀY
 from django.core.validators import MinValueValidator
 from products.models import SanPham
-from partners.models import NhaCungCap, KhachHang
+from partners.models import NhaCungCap
 from django.db.models import Sum
 from decimal import Decimal
 from django.contrib.auth.models import User
 
 
+class Kho(models.Model):
+    TRANG_THAI_CHOICES = [
+        ('dang_hoat_dong', 'Đang hoạt động'),
+        ('ngung_hoat_dong', 'Ngừng hoạt động'),
+        ('bao_tri', 'Bảo trì'),
+    ]
+    ma_kho = models.CharField(max_length=20, unique=True, verbose_name="Mã kho")
+    ten_kho = models.CharField(max_length=100, verbose_name="Tên kho")
+    dia_chi = models.TextField(verbose_name="Địa chỉ")
+    nguoi_quan_ly = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Người quản lý"
+    )
+    dien_thoai = models.CharField(max_length=15, blank=True, verbose_name="Điện thoại")
+    trang_thai = models.CharField(
+        max_length=20,
+        choices=TRANG_THAI_CHOICES,
+        default='dang_hoat_dong',
+        verbose_name="Trạng thái"
+    )
+    ghi_chu = models.TextField(blank=True, verbose_name="Ghi chú")
+    ngay_tao = models.DateTimeField(auto_now_add=True)
+    ngay_cap_nhat = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = "Kho"
+        verbose_name_plural = "Kho"
+
+    def __str__(self):
+        return f"{self.ma_kho} - {self.ten_kho}"
+
+class TonKho(models.Model):
+    kho = models.ForeignKey(Kho, on_delete=models.CASCADE, verbose_name="Kho")
+    san_pham = models.ForeignKey('products.SanPham', on_delete=models.CASCADE, verbose_name="Sản phẩm")
+    so_luong_ton = models.IntegerField(default=0, verbose_name="Số lượng tồn")
+    so_luong_kha_dung = models.IntegerField(default=0, verbose_name="Số lượng khả dụng")
+    ngay_cap_nhat = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Tồn kho"
+        verbose_name_plural = "Tồn kho"
+        unique_together = ['kho', 'san_pham']
+
+    def __str__(self):
+        return f"{self.kho.ten_kho} - {self.san_pham.ten_san_pham}: {self.so_luong_ton}"
 
 class NhapKho(models.Model):
     ma_phieu = models.CharField(max_length=50, unique=True)
+    kho=models.ForeignKey(Kho, on_delete=models.CASCADE)
     ngay_nhap = models.DateTimeField(auto_now_add=True)
     nha_cung_cap = models.ForeignKey(NhaCungCap, on_delete=models.CASCADE)
     nguoi_lap = models.ForeignKey(settings.AUTH_USER_MODEL,
@@ -98,11 +146,10 @@ class ChiTietNhapKho(models.Model):
         verbose_name = "Chi tiết nhập kho"
         verbose_name_plural = "Chi tiết nhập kho"
 
-
 class XuatKho(models.Model):
     ma_phieu = models.CharField(max_length=50, unique=True)
+    kho=models.ForeignKey(Kho, on_delete=models.CASCADE)
     ngay_xuat = models.DateTimeField(auto_now_add=True)
-    khach_hang = models.ForeignKey(KhachHang, on_delete=models.CASCADE)
     nguoi_lap = models.ForeignKey(settings.AUTH_USER_MODEL,
                                   on_delete=models.CASCADE)  # SỬA THÀNH settings.AUTH_USER_MODEL
     tong_tien = models.DecimalField(max_digits=15, decimal_places=2, default=0)
@@ -204,3 +251,4 @@ class ChiTietKiemKe(models.Model):
 
     def __str__(self):
         return f"{self.san_pham.ten_san_pham} - {self.chenh_lech}"
+
