@@ -1,6 +1,5 @@
 from django import forms
 from .models import NhaCungCap
-
 class NhaCungCapForm(forms.ModelForm):
     class Meta:
         model = NhaCungCap

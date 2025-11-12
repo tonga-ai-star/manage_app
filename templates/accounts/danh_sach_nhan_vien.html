@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Quản lý nhân viên{% endblock %}
+{% block page_title %}👥 Quản lý nhân viên{% endblock %}
+
+{% block content %}
+<!-- Thống kê nhanh -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Tổng nhân viên</div>
+                        <div class="h4">{{ tong_nhan_vien }}</div>
+                    </div>
+                    <i class="fas fa-users fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Đang làm việc</div>
+                        <div class="h4">{{ nhan_vien_dang_lam }}</div>
+                    </div>
+                    <i class="fas fa-user-check fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Đã nghỉ việc</div>
+                        <div class="h4">{{ nhan_vien_nghi_viec }}</div>
+                    </div>
+                    <i class="fas fa-user-times fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="text-uppercase mb-1">Tỷ lệ duy trì</div>
+                        <div class="h4">
+                            {% if tong_nhan_vien > 0 %}
+                                {{ nhan_vien_dang_lam }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </div>
+                    </div>
+                    <i class="fas fa-chart-line fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bộ lọc và tìm kiếm -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h6 class="card-title">🔍 Tìm kiếm & Lọc</h6>
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" name="q" class="form-control" placeholder="Tìm theo tên, username hoặc email..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <select name= 'vai_tro' class="form-select">
+                    <option value="">Tất cả vai trò</option>
+                    <option value= "manager" {% if selected_vai_tro == 'manager' %}selected{% endif %}>Quản lý</option>
+                    <option value= "staff" {% if selected_vai_tro == 'staff' %}selected{% endif %}>Nhân viên</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="trang_thai" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="true" {% if selected_trang_thai == 'true' %}selected{% endif %}>Đang làm</option>
+                    <option value="false" {% if selected_trang_thai == 'false' %}selected{% endif %}>Nghỉ việc</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-2"></i>Tìm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bảng danh sách nhân viên -->
+<div class="card table-custom">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="card-title mb-0">📋 Danh sách nhân viên</h6>
+        <a href="{% url 'them_nhan_vien' %}" class="btn btn-primary-custom btn-sm">
+            <i class="fas fa-plus me-2"></i>Thêm nhân viên
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Họ tên</th>
+                        <th>Tên đăng nhập</th>
+                        <th>Vai trò</th>
+                        <th>Email</th>
+                        <th>Ngày tham gia</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nv in nhan_vien_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <strong>{{ nv.ho_ten|default:nv.username }}</strong>
+                        </td>
+                        <td>{{ nv.username }}</td>
+                        <td>
+                            {% if nv.vai_tro == 'admin' %}
+                                <span class="badge bg-danger">Quản trị</span>
+                            {% elif nv.vai_tro == 'manager' %}
+                                <span class="badge bg-warning">Quản lý</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Nhân viên</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ nv.email|default:"-" }}</td>
+                        <td>{{ nv.date_joined|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if nv.trang_thai %}
+                                <span class="badge bg-success">Đang làm</span>
+                            {% else %}
+                                <span class="badge bg-danger">Nghỉ việc</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'chi_tiet_nhan_vien' nv.id %}" class="btn btn-outline-primary" title="Xem chi tiết">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'sua_nhan_vien' nv.id %}" class="btn btn-outline-warning" title="Sửa">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                {% if nv.id != request.user.id %}
+                                <a href="{% url 'xoa_nhan_vien' nv.id %}" class="btn btn-outline-danger" title="Xóa">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fas fa-users fa-2x mb-2"></i>
+                            <br>Không tìm thấy nhân viên nào
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

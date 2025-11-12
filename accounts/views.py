@@ -54,9 +54,125 @@ from partners.models import NhaCungCap
 #     }
 #
 #     return render(request, 'dashboard.html', context)
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import Q
+from .models import NguoiDung
+from .forms import NguoiDungForm
 
+
+@login_required
+def danh_sach_nhan_vien(request):
+    nhan_vien_list = NguoiDung.objects.filter(vai_tro__in=['staff', 'manager'])
+
+    # --- Lấy tham số tìm kiếm & lọc ---
+    q = request.GET.get('q', '').strip()
+    vai_tro = request.GET.get('vai_tro', '')
+    trang_thai = request.GET.get('trang_thai', '')
+
+    # --- Tìm kiếm ---
+    if q:
+        nhan_vien_list = nhan_vien_list.filter(
+            Q(ho_ten__icontains=q) |
+            Q(username__icontains=q) |
+            Q(email__icontains=q)
+        )
+
+    # --- Lọc theo vai trò ---
+    if vai_tro:
+        nhan_vien_list = nhan_vien_list.filter(vai_tro=vai_tro)
+
+    # --- Lọc theo trạng thái ---
+    if trang_thai:
+        nhan_vien_list = nhan_vien_list.filter(trang_thai=(trang_thai == 'true'))
+
+    # --- Sắp xếp mới nhất ---
+    nhan_vien_list = nhan_vien_list.order_by('-date_joined')
+
+    # --- Thống kê ---
+    tong_nhan_vien = nhan_vien_list.count()
+    nhan_vien_dang_lam = nhan_vien_list.filter(trang_thai=True).count()
+    nhan_vien_nghi_viec = nhan_vien_list.filter(trang_thai=False).count()
+
+    # --- Gửi dữ liệu qua template ---
+    context = {
+        'nhan_vien_list': nhan_vien_list,
+        'tong_nhan_vien': tong_nhan_vien,
+        'nhan_vien_dang_lam': nhan_vien_dang_lam,
+        'nhan_vien_nghi_viec': nhan_vien_nghi_viec,
+
+        # giữ lại giá trị lọc & tìm kiếm trong form
+        'search_query': q,
+        'selected_vai_tro': vai_tro,
+        'selected_trang_thai': trang_thai,
+    }
+
+    return render(request, 'accounts/danh_sach_nhan_vien.html', context)
+
+
+@login_required
+def them_nhan_vien(request):
+    if request.method == 'POST':
+        form = NguoiDungForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password('123456')  # Mật khẩu mặc định
+            user.save()
+            messages.success(request, 'Thêm nhân viên thành công!')
+            return redirect('danh_sach_nhan_vien')
+    else:
+        form = NguoiDungForm()
+
+    context = {
+        'form': form,
+        'title': 'Thêm nhân viên mới'
+    }
+    return render(request, 'accounts/them_nhan_vien.html', context)
+
+
+@login_required
+def chi_tiet_nhan_vien(request, nhan_vien_id):
+    nhan_vien = get_object_or_404(NguoiDung, id=nhan_vien_id)
+
+    context = {
+        'nhan_vien': nhan_vien
+    }
+    return render(request, 'accounts/chi_tiet_nhan_vien.html', context)
+
+
+@login_required
+def sua_nhan_vien(request, nhan_vien_id):
+    nhan_vien = get_object_or_404(NguoiDung, id=nhan_vien_id)
+
+    if request.method == 'POST':
+        form = NguoiDungForm(request.POST, instance=nhan_vien)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Cập nhật thông tin nhân viên thành công!')
+            return redirect('danh_sach_nhan_vien')
+    else:
+        form = NguoiDungForm(instance=nhan_vien)
+
+    context = {
+        'form': form,
+        'nhan_vien': nhan_vien,
+        'title': 'Sửa thông tin nhân viên'
+    }
+    return render(request, 'accounts/them_nhan_vien.html', context)
+
+
+@login_required
+def xoa_nhan_vien(request, nhan_vien_id):
+    nhan_vien = get_object_or_404(NguoiDung, id=nhan_vien_id)
+
+    if nhan_vien.id == request.user.id:
+        messages.error(request, 'Không thể xóa chính tài khoản của bạn!')
+    else:
+        nhan_vien.delete()
+        messages.success(request, 'Đã xóa nhân viên thành công!')
+
+    return redirect('danh_sach_nhan_vien')
 @login_required
 def dashboard(request):
     # DÙNG DỮ LIỆU GIẢ - KHÔNG TRUY VẤN DATABASE
@@ -83,3 +199,4 @@ def dashboard(request):
         ],
     }
     return render(request, 'dashboard.html', context)
+
