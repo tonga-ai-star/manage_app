@@ -11,6 +11,6 @@ class DonViTinhAdmin(admin.ModelAdmin):
 
 @admin.register(SanPham)
 class SanPhamAdmin(admin.ModelAdmin):
-    list_display = ['ma_san_pham', 'ten_san_pham', 'danh_muc', 'ton_kho', 'gia_ban', 'trang_thai']
+    list_display = ['ma_san_pham', 'ten_san_pham', 'danh_muc', 'gia_ban', 'trang_thai']
     list_filter = ['danh_muc', 'trang_thai']
     search_fields = ['ma_san_pham', 'ten_san_pham']

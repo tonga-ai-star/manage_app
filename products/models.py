@@ -26,7 +26,6 @@ class SanPham(models.Model):
     ma_san_pham = models.CharField(max_length=50, unique=True)
     ten_san_pham = models.CharField(max_length=200)
     mo_ta = models.TextField(blank=True, null=True)
-    ton_kho = models.IntegerField(default=0)
     gia_nhap = models.DecimalField(max_digits=15, decimal_places=2)
     gia_ban = models.DecimalField(max_digits=15, decimal_places=2)
     trang_thai = models.BooleanField(default=True)

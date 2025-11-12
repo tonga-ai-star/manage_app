@@ -2,7 +2,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+def custom_logout(request):
+    logout(request)
+    return redirect('login')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('accounts.urls')),
@@ -12,6 +16,7 @@ urlpatterns = [
     path('bao-cao/', include('reports.urls')),
     path('kiem-ke/', include('inventory.urls')),
     path('settings_app/', include('settings_app.urls')),
+    path('logout/', custom_logout, name='logout'),
 ]
 
 if settings.DEBUG:

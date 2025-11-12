@@ -126,8 +126,15 @@
             <a class="nav-link {% if 'xuat' in request.path %}active{% endif %}"
                href="{% url 'inventory:danh_sach_xuat' %}">
                 <i class="fas fa-arrow-up me-3"></i>Xuất kho
-            </a>
-
+            <!-- Tồn kho -->
+                <a class="nav-link {% if 'ton-kho' in request.path %}active{% endif %}"
+                   href="{% url 'inventory:chi_tiet_ton_kho' kho_id=1 %}">
+                    <i class="fas fa-warehouse me-3"></i>Tồn kho
+                </a>
+                <a class="nav-link {% if 'kiem-ke' in request.path %}active{% endif %}"
+                   href="{% url 'inventory:danh_sach_kiem_ke' %}">
+                    <i class="fas fa-clipboard-list me-3"></i>Kiểm kê
+                </a>
             <a class="nav-link" href="/doi-tac/nha-cung-cap/">
                 <i class="fas fa-truck me-3"></i>Nhà cung cấp
             </a>
@@ -165,8 +172,11 @@
                         </a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
-                            <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-                        </a></li>
+                            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link" style="padding:0;">Đăng xuất</button>
+                    </form>
+                </a></li>
                     </ul>
                 </div>
             </div>

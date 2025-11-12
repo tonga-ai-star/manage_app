@@ -60,6 +60,8 @@ from django.contrib import messages
 from django.db.models import Q
 from .models import NguoiDung
 from .forms import NguoiDungForm
+from django.shortcuts import redirect
+from django.contrib.auth import logout
 
 
 @login_required
@@ -200,3 +202,6 @@ def dashboard(request):
     }
     return render(request, 'dashboard.html', context)
 
+def custom_logout(request):
+    logout(request)
+    return redirect('login')

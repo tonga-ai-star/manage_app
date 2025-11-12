@@ -314,14 +314,28 @@ def tao_kho(request):
 
 
 @login_required
-def chi_tiet_ton_kho(request, kho_id):
-    kho = get_object_or_404(Kho, id=kho_id)
-    ton_kho = TonKho.objects.filter(kho=kho).select_related('san_pham')
+def chi_tiet_ton_kho(request, kho_id=None):
+    # Lấy danh sách kho và sản phẩm để filter
+    danh_sach_kho = Kho.objects.filter(trang_thai='dang_hoat_dong')
+    danh_sach_san_pham = SanPham.objects.all()
 
-    return render(request, 'inventory/chi_tiet_ton_kho.html', {
-        'kho': kho,
-        'ton_kho': ton_kho
-    })
+    # Lọc theo GET params hoặc theo kho_id từ URL
+    san_pham_id = request.GET.get('san_pham')
+
+    ton_kho = TonKho.objects.all()
+    if kho_id:
+        ton_kho = ton_kho.filter(kho_id=kho_id)
+    if san_pham_id:
+        ton_kho = ton_kho.filter(san_pham_id=san_pham_id)
+
+    context = {
+        'danh_sach_kho': danh_sach_kho,
+        'danh_sach_san_pham': danh_sach_san_pham,
+        'ton_kho': ton_kho,
+        'selected_kho': kho_id,
+        'selected_san_pham': san_pham_id,
+    }
+    return render(request, 'inventory/chi_tiet_ton_kho.html', context)
 
 
 # ======================
