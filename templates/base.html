@@ -119,12 +119,12 @@
             </a>
 
             <a class="nav-link {% if 'nhap' in request.path %}active{% endif %}"
-               href="{% url 'inventory:danh_sach_nhap' %}">
+               href="{% url 'inventory:nhapkho_list' %}">
                 <i class="fas fa-arrow-down me-3"></i>Nhập kho
             </a>
 
             <a class="nav-link {% if 'xuat' in request.path %}active{% endif %}"
-               href="{% url 'inventory:danh_sach_xuat' %}">
+               href="{% url 'inventory:xuatkho_list' %}">
                 <i class="fas fa-arrow-up me-3"></i>Xuất kho
             </a>
             <a class="nav-link {% if 'ton-kho' in request.path %}active{% endif %}"

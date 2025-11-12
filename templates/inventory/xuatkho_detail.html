@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chi tiết phiếu xuất{% endblock %}
+{% block page_title %}📄 Chi tiết phiếu xuất {{ phieu_xuat.ma_phieu }}{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Thông tin phiếu xuất</h5>
+        <div>
+            <a href="{% url 'inventory:xuatkho_list' %}" class="btn btn-light btn-sm">
+                <i class="fas fa-arrow-left me-1"></i>Quay lại danh sách
+            </a>
+        </div>
+    </div>
+
+    <div class="card-body">
+        <!-- Thông tin phiếu xuất -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <p><strong>Mã phiếu:</strong> <span class="text-primary">{{ phieu_xuat.ma_phieu }}</span></p>
+                <p><strong>Ngày xuất:</strong> {{ phieu_xuat.ngay_xuat|date:"d/m/Y H:i" }}</p>
+                <p><strong>Người lập:</strong> {{ phieu_xuat.nguoi_lap.username }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Khách hàng:</strong> {{ phieu_xuat.khach_hang.ten_khach_hang }}</p>
+                <p><strong>Số điện thoại:</strong> {{ phieu_xuat.khach_hang.dien_thoai }}</p>
+                <p><strong>Ghi chú:</strong> {{ phieu_xuat.ghi_chu|default:"Không có" }}</p>
+            </div>
+        </div>
+
+        <!-- Chi tiết sản phẩm -->
+        <h5 class="mt-3 mb-3"><i class="fas fa-boxes me-2 text-success"></i>Chi tiết sản phẩm</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Sản phẩm</th>
+                        <th class="text-center">Số lượng</th>
+                        <th class="text-end">Đơn giá</th>
+                        <th class="text-end">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ct in chi_tiet_xuat_list %}
+                    <tr>
+                        <td>{{ ct.san_pham.ten_san_pham }}</td>
+                        <td class="text-center">{{ ct.so_luong }}</td>
+                        <td class="text-end">{{ ct.don_gia|floatformat:0 }}₫</td>
+                        <td class="text-end fw-bold text-success">{{ ct.thanh_tien|floatformat:0 }}₫</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            <i class="fas fa-outbox fa-2x mb-2 opacity-50"></i><br>
+                            Chưa có sản phẩm nào trong phiếu xuất này.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Tổng tiền -->
+        <div class="d-flex justify-content-end mt-3">
+            <div class="text-end">
+                <h5 class="mb-1">Tổng tiền:</h5>
+                <h4 class="text-success fw-bold">{{ phieu_xuat.tong_tien|floatformat:0 }}₫</h4>
+            </div>
+        </div>
+
+        <!-- Nút hành động -->
+        <div class="d-flex justify-content-end mt-4 gap-2">
+            <a href="{% url 'inventory:xuatkho_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Quay lại
+            </a>
+            <button class="btn btn-warning">
+                <i class="fas fa-print me-1"></i>In phiếu
+            </button>
+            <form action="{% url 'inventory:xoa_phieu_xuat' phieu_xuat.id %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn xóa phiếu này?');">
+                    <i class="fas fa-trash me-1"></i>Xóa phiếu xuất
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

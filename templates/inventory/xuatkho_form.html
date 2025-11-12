@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Tạo phiếu xuất kho{% endblock %}
-{% block page_title %}📤 Tạo phiếu xuất kho{% endblock %}
+{% block title %}📤 Xuất kho nội bộ{% endblock %}
+{% block page_title %}📤 Xuất kho nội bộ{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -10,44 +10,39 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-edit me-2"></i>Thông tin phiếu xuất
+                    <i class="fas fa-exchange-alt me-2"></i>Thông tin phiếu xuất
                 </h5>
             </div>
             <div class="card-body">
                 <form method="post" id="xuatKhoForm">
                     {% csrf_token %}
 
+                    <!-- Kho xuất & Kho nhận -->
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label fw-bold">Khách hàng <span class="text-danger">*</span></label>
-                                <input type="text" name="ten_khach_hang" class="form-control ten-khach-hang"
-                                       placeholder="Nhập tên khách hàng..." list="khachHangList"
-                                       value="{{ form.ten_khach_hang.value|default:'' }}" required>
-                                <datalist id="khachHangList">
-                                    {% for kh in khach_hang_list %}
-                                    <option value="{{ kh.ten_khach_hang }}">
-                                    {% endfor %}
-                                </datalist>
-                                <small class="text-muted">Nhập tên khách hàng hoặc chọn từ danh sách</small>
-                            </div>
+                            <label class="form-label fw-bold">Kho xuất <span class="text-danger">*</span></label>
+                            <select name="kho_xuat" class="form-control" required>
+                                <option value="">-- Chọn kho xuất --</option>
+                                {% for kho in kho_list %}
+                                <option value="{{ kho.id }}">{{ kho.ten_kho }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-6">
-                            <div class="form-group">
-                                <label class="form-label fw-bold">Mã phiếu</label>
-                                <input type="text" class="form-control" value="Tự động" disabled>
-                                <small class="text-muted">Mã phiếu sẽ được tạo tự động</small>
-                            </div>
+                            <label class="form-label fw-bold">Kho nhận <span class="text-danger">*</span></label>
+                            <select name="kho_nhan" class="form-control" required>
+                                <option value="">-- Chọn kho nhận --</option>
+                                {% for kho in kho_list %}
+                                <option value="{{ kho.id }}">{{ kho.ten_kho }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
 
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <div class="form-group">
-                                <label class="form-label fw-bold">Ghi chú</label>
-                                {{ form.ghi_chu }}
-                            </div>
-                        </div>
+                    <!-- Ghi chú -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Ghi chú</label>
+                        <textarea name="ghi_chu" class="form-control" rows="2"></textarea>
                     </div>
 
                     <!-- Chi tiết sản phẩm -->
@@ -63,55 +58,34 @@
 
                         <div id="productDetails">
                             <div class="product-row row mb-3 border-bottom pb-3">
-                                <div class="col-md-3">
+                                <div class="col-md-4">
                                     <label class="form-label small fw-bold">Sản phẩm <span class="text-danger">*</span></label>
                                     <input type="text" name="ten_san_pham" class="form-control ten-san-pham"
                                            placeholder="Nhập tên sản phẩm..." list="sanPhamList" required>
                                     <datalist id="sanPhamList">
                                         {% for sp in san_pham_list %}
                                         <option value="{{ sp.ten_san_pham }}"
-                                                data-id="{{ sp.id }}"
                                                 data-danhmuc="{{ sp.danh_muc.ten_danh_muc }}"
                                                 data-donvitinh="{{ sp.don_vi_tinh.ten_don_vi }}"
-                                                data-giaban="{{ sp.gia_ban }}"
-                                                data-tonkho="{{ sp.ton_kho }}">
-                                        {% endfor %}
-                                    </datalist>
-                                    <small class="ton-kho-info text-muted small" style="display: none;"></small>
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label small fw-bold">Danh mục <span class="text-danger">*</span></label>
-                                    <input type="text" name="danh_muc" class="form-control danh-muc-input"
-                                           placeholder="Nhập danh mục" list="danhMucList" required>
-                                    <datalist id="danhMucList">
-                                        {% for dm in danh_muc_list %}
-                                        <option value="{{ dm.ten_danh_muc }}">
+                                                data-gianhap="{{ sp.gia_nhap|default:0 }}">
                                         {% endfor %}
                                     </datalist>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small fw-bold">Đơn vị tính <span class="text-danger">*</span></label>
-                                    <input type="text" name="don_vi_tinh" class="form-control don-vi-tinh-input"
-                                           placeholder="Nhập đơn vị" list="donViTinhList" required>
-                                    <datalist id="donViTinhList">
-                                        {% for dvt in don_vi_tinh_list %}
-                                        <option value="{{ dvt.ten_don_vi }}">
-                                        {% endfor %}
-                                    </datalist>
+                                    <label class="form-label small fw-bold">Danh mục</label>
+                                    <input type="text" name="danh_muc" class="form-control danh-muc-input" readonly>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small fw-bold">Số lượng <span class="text-danger">*</span></label>
-                                    <input type="number" name="so_luong" class="form-control so-luong"
-                                           placeholder="SL" min="1" required onchange="calculateTotal()">
+                                    <label class="form-label small fw-bold">Đơn vị</label>
+                                    <input type="text" name="don_vi_tinh" class="form-control don-vi-tinh-input" readonly>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label small fw-bold">Đơn giá <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <input type="number" name="don_gia" class="form-control don-gia"
-                                               placeholder="Đơn giá" step="0.01" min="0" required
-                                               onchange="calculateTotal()">
-                                        <span class="input-group-text">₫</span>
-                                    </div>
+                                    <label class="form-label small fw-bold">Số lượng</label>
+                                    <input type="number" name="so_luong" class="form-control so-luong" min="1" required onchange="calculateTotal()">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small fw-bold">Đơn giá</label>
+                                    <input type="number" name="don_gia" class="form-control don-gia" min="0" step="0.01" required onchange="calculateTotal()">
                                 </div>
                                 <div class="col-md-1">
                                     <label class="form-label small fw-bold">Thành tiền</label>
@@ -141,61 +115,33 @@
                         </div>
                     </div>
 
+                    <!-- Nút hành động -->
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary-custom">
+                        <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-2"></i>Lưu phiếu xuất
                         </button>
-                        <a href="{% url 'inventory:danh_sach_xuat' %}" class="btn btn-secondary">
-                            <i class="fas fa-times me-2"></i>Hủy
-                        </a>
                         <button type="reset" class="btn btn-outline-secondary">
                             <i class="fas fa-redo me-2"></i>Làm mới
                         </button>
                     </div>
+
                 </form>
             </div>
         </div>
     </div>
 
+    <!-- Cột thống kê -->
     <div class="col-lg-4">
-        <!-- Thông tin hướng dẫn -->
         <div class="card">
             <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-info-circle me-2"></i>Hướng dẫn
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-warning">
-                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Lưu ý quan trọng:</h6>
-                    <ul class="mb-0 ps-3">
-                        <li>Nhập tên khách hàng hoặc chọn từ danh sách gợi ý</li>
-                        <li>Nhập tên sản phẩm hoặc chọn từ danh sách có sẵn</li>
-                        <li>Nhập danh mục hoặc chọn từ danh sách gợi ý</li>
-                        <li>Nhập đơn vị tính hoặc chọn từ danh sách gợi ý</li>
-                        <li>Số lượng xuất không được vượt quá tồn kho</li>
-                        <li>Đơn giá mặc định lấy từ giá bán của sản phẩm</li>
-                        <li>Kiểm tra kỹ thông tin trước khi lưu</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <!-- Thống kê nhanh -->
-        <div class="card mt-3">
-            <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>Thống kê nhanh
-                </h6>
+                <h6 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Thống kê</h6>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Số sản phẩm:</span>
-                    <strong id="productCount">0</strong>
+                    <span>Số sản phẩm:</span><strong id="productCount">0</strong>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Tổng số lượng:</span>
-                    <strong id="totalQuantity">0</strong>
+                    <span>Tổng số lượng:</span><strong id="totalQuantity">0</strong>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between">
@@ -204,74 +150,14 @@
                 </div>
             </div>
         </div>
-
-        <!-- Thông tin khách hàng -->
-        <div class="card mt-3">
-            <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-users me-2"></i>Khách hàng gần đây
-                </h6>
-            </div>
-            <div class="card-body">
-                {% if khach_hang_list %}
-                    <div class="list-group list-group-flush">
-                        {% for kh in khach_hang_list|slice:":5" %}
-                        <div class="list-group-item px-0">
-                            <div class="fw-bold">{{ kh.ten_khach_hang }}</div>
-                            <small class="text-muted">{{ kh.dien_thoai }}</small>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted text-center mb-0">Chưa có khách hàng</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Danh mục sản phẩm -->
-        <div class="card mt-3">
-            <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-tags me-2"></i>Danh mục sản phẩm
-                </h6>
-            </div>
-            <div class="card-body">
-                {% if danh_muc_list %}
-                    <div class="list-group list-group-flush">
-                        {% for dm in danh_muc_list|slice:":8" %}
-                        <div class="list-group-item px-0">
-                            <div class="fw-bold">{{ dm.ten_danh_muc }}</div>
-                            <small class="text-muted">{{ dm.mo_ta|default:"Không có mô tả" }}</small>
-                        </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted text-center mb-0">Chưa có danh mục</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Đơn vị tính -->
-        <div class="card mt-3">
-            <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-balance-scale me-2"></i>Đơn vị tính
-                </h6>
-            </div>
-            <div class="card-body">
-                {% if don_vi_tinh_list %}
-                    <div class="d-flex flex-wrap gap-2">
-                        {% for dvt in don_vi_tinh_list %}
-                        <span class="badge bg-info">{{ dvt.ten_don_vi }}</span>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p class="text-muted text-center mb-0">Chưa có đơn vị tính</p>
-                {% endif %}
-            </div>
-        </div>
     </div>
 </div>
+
+
+
+
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -288,7 +174,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         newRow.querySelector('.remove-product').removeAttribute('disabled');
         newRow.querySelector('.total').value = '0';
-        newRow.querySelector('.ton-kho-info').style.display = 'none';
         productDetails.appendChild(newRow);
         updateStatistics();
     });
@@ -312,8 +197,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const danhMucInput = row.querySelector('.danh-muc-input');
             const donViTinhInput = row.querySelector('.don-vi-tinh-input');
             const donGiaInput = row.querySelector('.don-gia');
-            const tonKhoInfo = row.querySelector('.ton-kho-info');
-            const soLuongInput = row.querySelector('.so-luong');
 
             if (productName) {
                 // Tìm sản phẩm trong datalist
@@ -329,11 +212,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (foundProduct && foundProduct.dataset.id) {
-                    // Tự động điền danh mục, đơn vị tính, giá bán, tồn kho
+                    // Tự động điền danh mục, đơn vị tính, giá nhập
                     const danhMuc = foundProduct.dataset.danhmuc;
                     const donViTinh = foundProduct.dataset.donvitinh;
-                    const giaBan = foundProduct.dataset.giaban;
-                    const tonKho = foundProduct.dataset.tonkho;
+                    const giaNhap = foundProduct.dataset.gianhap;
 
                     if (danhMuc && !danhMucInput.value) {
                         danhMucInput.value = danhMuc;
@@ -343,67 +225,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         donViTinhInput.value = donViTinh;
                     }
 
-                    if (giaBan && !donGiaInput.value) {
-                        donGiaInput.value = giaBan;
+                    if (giaNhap && !donGiaInput.value) {
+                        donGiaInput.value = giaNhap;
                     }
-
-                    // Hiển thị thông tin tồn kho
-                    if (tonKho) {
-                        tonKhoInfo.textContent = `Tồn kho: ${tonKho}`;
-                        tonKhoInfo.style.display = 'block';
-                        tonKhoInfo.className = 'ton-kho-info small ' + (tonKho > 0 ? 'text-success' : 'text-danger');
-
-                        // Đặt giá trị tối đa cho số lượng
-                        soLuongInput.setAttribute('max', tonKho);
-                    }
-                } else {
-                    // Ẩn thông tin tồn kho nếu không tìm thấy sản phẩm
-                    tonKhoInfo.style.display = 'none';
-                    danhMucInput.value = '';
-                    donViTinhInput.value = '';
                 }
 
                 calculateTotal();
             }
-        }
-    });
-
-    // Kiểm tra số lượng không vượt quá tồn kho
-    productDetails.addEventListener('input', function(e) {
-        if (e.target.classList.contains('so-luong')) {
-            const quantity = parseInt(e.target.value) || 0;
-            const row = e.target.closest('.product-row');
-            const productName = row.querySelector('.ten-san-pham').value;
-            const tonKhoInfo = row.querySelector('.ton-kho-info');
-
-            if (productName && tonKhoInfo.style.display !== 'none') {
-                // Lấy tồn kho từ datalist
-                const datalist = document.getElementById('sanPhamList');
-                const options = datalist.options;
-                let tonKho = 0;
-
-                for (let option of options) {
-                    if (option.value === productName) {
-                        tonKho = parseInt(option.dataset.tonkho) || 0;
-                        break;
-                    }
-                }
-
-                if (quantity > tonKho) {
-                    e.target.classList.add('is-invalid');
-                    tonKhoInfo.classList.remove('text-success');
-                    tonKhoInfo.classList.add('text-danger', 'fw-bold');
-                    tonKhoInfo.textContent = `Tồn kho: ${tonKho} (Vượt quá tồn kho!)`;
-                } else {
-                    e.target.classList.remove('is-invalid');
-                    tonKhoInfo.classList.remove('text-danger', 'fw-bold');
-                    tonKhoInfo.classList.add('text-success');
-                    tonKhoInfo.textContent = `Tồn kho: ${tonKho}`;
-                }
-            }
-
-            calculateTotal();
-            updateStatistics();
         }
     });
 
@@ -449,7 +277,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-.ten-khach-hang:focus, .ten-san-pham:focus, .danh-muc-input:focus, .don-vi-tinh-input:focus, .so-luong:focus, .don-gia:focus {
+.ten-san-pham:focus, .danh-muc-input:focus, .don-vi-tinh-input:focus, .so-luong:focus, .don-gia:focus {
     border-color: #3498db;
     box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
 }
@@ -465,9 +293,6 @@ document.addEventListener('DOMContentLoaded', function() {
     border: none;
     padding: 8px 0;
 }
-.is-invalid {
-    border-color: #dc3545;
-    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-}
 </style>
 {% endblock %}
+{{ block.super }}

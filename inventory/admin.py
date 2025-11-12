@@ -2,6 +2,8 @@ from django.contrib import admin
 from .models import NhapKho, ChiTietNhapKho, XuatKho, ChiTietXuatKho
 from .models import KiemKe, ChiTietKiemKe
 from .models import Kho, TonKho
+from .forms import NhapKhoForm
+
 class ChiTietNhapKhoInline(admin.TabularInline):
     model = ChiTietNhapKho
     extra = 1
@@ -10,8 +12,9 @@ class ChiTietNhapKhoInline(admin.TabularInline):
 
 @admin.register(NhapKho)
 class NhapKhoAdmin(admin.ModelAdmin):
-    list_display = ['ma_phieu', 'ngay_nhap', 'nha_cung_cap', 'tong_tien', 'nguoi_lap']
-    list_filter = ['ngay_nhap', 'nha_cung_cap']
+    form = NhapKhoForm
+    list_display = ['ma_phieu', 'ngay_nhap', 'nha_cung_cap','kho', 'tong_tien', 'nguoi_lap']
+    list_filter = ['ngay_nhap', 'nha_cung_cap', 'kho']
     search_fields = ['ma_phieu', 'nha_cung_cap__ten_nha_cung_cap']
     inlines = [ChiTietNhapKhoInline]
 

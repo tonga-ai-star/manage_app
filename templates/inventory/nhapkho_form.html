@@ -17,19 +17,28 @@
                 <form method="post" id="nhapKhoForm">
                     {% csrf_token %}
 
+                    <!-- Chọn hoặc nhập nhà cung cấp -->
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label fw-bold">Nhà cung cấp <span class="text-danger">*</span></label>
-                                {{ form.ten_nha_cung_cap }}
-                                <datalist id="nhaCungCapList">
+
+                                <!-- 1. Chọn nhà cung cấp có sẵn -->
+                                <select name="nha_cung_cap_id" class="form-control">
+                                    <option value="">-- Chọn nhà cung cấp --</option>
                                     {% for ncc in nha_cung_cap_list %}
-                                    <option value="{{ ncc.ten_nha_cung_cap }}">
+                                        <option value="{{ ncc.id }}">{{ ncc.ten_nha_cung_cap }}</option>
                                     {% endfor %}
-                                </datalist>
-                                <small class="text-muted">Nhập tên nhà cung cấp hoặc chọn từ danh sách</small>
+                                </select>
+
+                                <!-- 2. Nhập mới nếu chưa có -->
+                                <input type="text" name="nha_cung_cap_moi" class="form-control mt-2"
+                                       placeholder="Nhập tên nhà cung cấp mới nếu chưa có">
+
+                                <small class="text-muted">Bạn có thể chọn nhà cung cấp có sẵn hoặc nhập mới</small>
                             </div>
                         </div>
+
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label fw-bold">Mã phiếu</label>
@@ -39,6 +48,7 @@
                         </div>
                     </div>
 
+                    <!-- Ghi chú -->
                     <div class="row mb-4">
                         <div class="col-12">
                             <div class="form-group">
@@ -122,6 +132,24 @@
                             </div>
                         </div>
                     </div>
+                    <!-- KHO-->
+<div class="col-md-6">
+    <div class="form-group">
+        <label class="form-label fw-bold">Kho <span class="text-danger">*</span></label>
+        <select name="kho_id" class="form-control" required>
+            <option value="">-- Chọn kho --</option>
+            {% if kho_list %}
+                {% for kho in kho_list %}
+                    <option value="{{ kho.id }}">{{ kho.ten_kho }}</option>
+                {% endfor %}
+            {% endif %}
+
+        </select>
+    </div>
+</div>
+
+            </div>
+</div>
 
                     <!-- Tổng tiền -->
                     <div class="row mb-4">
@@ -137,11 +165,12 @@
                         </div>
                     </div>
 
+                    <!-- Nút hành động -->
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary-custom">
                             <i class="fas fa-save me-2"></i>Lưu phiếu nhập
                         </button>
-                        <a href="{% url 'inventory:danh_sach_nhap' %}" class="btn btn-secondary">
+                        <a href="{% url 'inventory:nhapkho_list' %}" class="btn btn-secondary">
                             <i class="fas fa-times me-2"></i>Hủy
                         </a>
                         <button type="reset" class="btn btn-outline-secondary">
@@ -153,8 +182,9 @@
         </div>
     </div>
 
+    <!-- Cột phải -->
     <div class="col-lg-4">
-        <!-- Thông tin hướng dẫn -->
+        <!-- Hướng dẫn -->
         <div class="card">
             <div class="card-header">
                 <h6 class="card-title mb-0">
@@ -180,18 +210,14 @@
         <!-- Thống kê nhanh -->
         <div class="card mt-3">
             <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>Thống kê nhanh
-                </h6>
+                <h6 class="card-title mb-0"><i class="fas fa-chart-bar me-2"></i>Thống kê nhanh</h6>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Số sản phẩm:</span>
-                    <strong id="productCount">0</strong>
+                    <span>Số sản phẩm:</span><strong id="productCount">0</strong>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Tổng số lượng:</span>
-                    <strong id="totalQuantity">0</strong>
+                    <span>Tổng số lượng:</span><strong id="totalQuantity">0</strong>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between">
@@ -201,12 +227,10 @@
             </div>
         </div>
 
-        <!-- Thông tin nhà cung cấp -->
+        <!-- Nhà cung cấp gần đây -->
         <div class="card mt-3">
             <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-truck me-2"></i>Nhà cung cấp gần đây
-                </h6>
+                <h6 class="card-title mb-0"><i class="fas fa-truck me-2"></i>Nhà cung cấp gần đây</h6>
             </div>
             <div class="card-body">
                 {% if nha_cung_cap_list %}
@@ -227,9 +251,7 @@
         <!-- Danh mục sản phẩm -->
         <div class="card mt-3">
             <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-tags me-2"></i>Danh mục sản phẩm
-                </h6>
+                <h6 class="card-title mb-0"><i class="fas fa-tags me-2"></i>Danh mục sản phẩm</h6>
             </div>
             <div class="card-body">
                 {% if danh_muc_list %}
@@ -250,9 +272,7 @@
         <!-- Đơn vị tính -->
         <div class="card mt-3">
             <div class="card-header">
-                <h6 class="card-title mb-0">
-                    <i class="fas fa-balance-scale me-2"></i>Đơn vị tính
-                </h6>
+                <h6 class="card-title mb-0"><i class="fas fa-balance-scale me-2"></i>Đơn vị tính</h6>
             </div>
             <div class="card-body">
                 {% if don_vi_tinh_list %}
@@ -405,3 +425,5 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 {% endblock %}
+{{ block.super }}
+

@@ -1,15 +1,15 @@
 from django import forms
-from .models import NhapKho,XuatKho, ChiTietXuatKho, ChiTietNhapKho
 from products.models import SanPham
 from partners.models import NhaCungCap
 from django.forms import inlineformset_factory
-
+from .models import NhapKho, XuatKho, ChiTietNhapKho, ChiTietXuatKho, Kho
 
 class NhapKhoForm(forms.ModelForm):
     class Meta:
         model = NhapKho
         fields = ['nha_cung_cap', 'ghi_chu']
         widgets = {
+            'kho': forms.Select(attrs={'class': 'form-control select2', 'id': 'kho-select'}),
             'nha_cung_cap': forms.Select(attrs={
                 'class': 'form-control select2',
                 'id': 'nha-cung-cap-select'
@@ -76,7 +76,6 @@ ChiTietNhapKhoFormSet = inlineformset_factory(
     validate_min=True
 )
 class XuatKhoForm(forms.ModelForm):
-    """Form tạo phiếu xuất kho"""
 
     class Meta:
         model = XuatKho
@@ -91,7 +90,6 @@ class XuatKhoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
 class ChiTietXuatKhoForm(forms.ModelForm):
-    """Form chi tiết phiếu xuất"""
 
     class Meta:
         model = ChiTietXuatKho
@@ -103,7 +101,6 @@ class ChiTietXuatKhoForm(forms.ModelForm):
         }
 
     def clean(self):
-        """Kiểm tra tồn kho trước khi cho xuất"""
         cleaned_data = super().clean()
         san_pham = cleaned_data.get('san_pham')
         so_luong = cleaned_data.get('so_luong')

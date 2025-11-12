@@ -1,11 +1,12 @@
 from django.db import models
-from django.conf import settings  # THÊM DÒNG NÀY
+from django.conf import settings
 from django.core.validators import MinValueValidator
 from products.models import SanPham
 from partners.models import NhaCungCap
 from django.db.models import Sum
 from decimal import Decimal
-from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+import re
 
 
 class Kho(models.Model):
@@ -70,35 +71,31 @@ class NhapKho(models.Model):
     ghi_chu = models.TextField(blank=True, null=True)
     ngay_tao = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = "Phiếu nhập kho"
+        verbose_name_plural = "Phiếu nhập kho"
+        ordering = ['-ngay_nhap']
+
     def __str__(self):
         return self.ma_phieu
 
     def save(self, *args, **kwargs):
         if not self.ma_phieu:
-            last_phieu = NhapKho.objects.order_by('-id').first()
+            last_phieu = XuatKho.objects.order_by('-id').first()
             if last_phieu:
-                last_number = int(last_phieu.ma_phieu.split('-')[-1])
-                self.ma_phieu = f'NK-{last_number + 1:04d}'
+                match = re.search(r'(\d+)$', last_phieu.ma_phieu)
+                if match:
+                    last_number = int(match.group(1))
+                else:
+                    last_number = 0
+                self.ma_phieu = f'XK-{last_number + 1:04d}'
             else:
-                self.ma_phieu = 'NK-0001'
+                self.ma_phieu = 'XK-0001'
         super().save(*args, **kwargs)
-        self.update_tong_tien()
 
     def update_tong_tien(self):
-        """Cập nhật tổng tiền phiếu nhập"""
-        total = self.chi_tiet_nhap.aggregate(
-            total=Sum('thanh_tien')
-        )['total'] or Decimal('0')
-
-        self.tong_tien = total
-        # Sử dụng update để tránh recursive save
+        total = self.chi_tiet_nhap.aggregate(total=Sum('thanh_tien'))['total'] or Decimal('0')
         NhapKho.objects.filter(id=self.id).update(tong_tien=total)
-
-    class Meta:
-        verbose_name = "Phiếu nhập kho"
-        verbose_name_plural = "Phiếu nhập kho"
-        ordering=['-ngay_nhap']
-
 
 class ChiTietNhapKho(models.Model):
     phieu_nhap = models.ForeignKey(NhapKho, on_delete=models.CASCADE, related_name='chi_tiet_nhap')
@@ -107,47 +104,37 @@ class ChiTietNhapKho(models.Model):
     don_gia = models.DecimalField(max_digits=15, decimal_places=2)
     thanh_tien = models.DecimalField(max_digits=15, decimal_places=2, editable=False)
 
-    def save(self, *args, **kwargs):
-        self.thanh_tien = self.so_luong * self.don_gia
-        super().save(*args, **kwargs)
-
-        # Cập nhật tồn kho sản phẩm
-        self.thanh_tien = self.so_luong * self.don_gia
-
-        # Kiểm tra xem là tạo mới hay cập nhật
-        is_new = self.pk is None
-
-        super().save(*args, **kwargs)
-
-        # Cập nhật tổng tiền phiếu nhập
-        self.phieu_nhap.update_tong_tien()
-
-        # Cập nhật tồn kho sản phẩm
-        if is_new:
-            self.san_pham.ton_kho += self.so_luong
-            self.san_pham.save()
-
-    def delete(self, *args, **kwargs):
-        # Lưu thông tin trước khi xóa
-        phieu_nhap = self.phieu_nhap
-        san_pham = self.san_pham
-        so_luong = self.so_luong
-
-        super().delete(*args, **kwargs)
-
-        # Cập nhật tổng tiền phiếu nhập
-        phieu_nhap.update_tong_tien()
-
-        # Trừ tồn kho sản phẩm
-        san_pham.ton_kho -= so_luong
-        san_pham.save()
-
-    def __str__(self):
-        return f"{self.san_pham.ten_san_pham} - {self.so_luong}"
     class Meta:
         verbose_name = "Chi tiết nhập kho"
         verbose_name_plural = "Chi tiết nhập kho"
 
+    def __str__(self):
+        return f"{self.san_pham.ten_san_pham} - {self.so_luong}"
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        self.thanh_tien = self.so_luong * self.don_gia
+        super().save(*args, **kwargs)
+        self.phieu_nhap.update_tong_tien()
+
+        # Cập nhật tồn kho (TonKho)
+        if is_new:
+            ton, created = TonKho.objects.get_or_create(kho=self.phieu_nhap.kho, san_pham=self.san_pham)
+            ton.so_luong_ton += self.so_luong
+            ton.so_luong_kha_dung += self.so_luong
+            ton.save()
+
+    def delete(self, *args, **kwargs):
+        phieu_nhap = self.phieu_nhap
+        ton = TonKho.objects.filter(kho=phieu_nhap.kho, san_pham=self.san_pham).first()
+        super().delete(*args, **kwargs)
+        phieu_nhap.update_tong_tien()
+
+        # Giảm tồn kho khi xóa chi tiết
+        if ton:
+            ton.so_luong_ton -= self.so_luong
+            ton.so_luong_kha_dung -= self.so_luong
+            ton.save()
 
 class XuatKho(models.Model):
     ma_phieu = models.CharField(max_length=50, unique=True)
@@ -159,22 +146,26 @@ class XuatKho(models.Model):
     ghi_chu = models.TextField(blank=True, null=True)
     ngay_tao = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = "Phiếu xuất kho"
+        verbose_name_plural = "Phiếu xuất kho"
+
     def __str__(self):
         return self.ma_phieu
+
+
 
     def save(self, *args, **kwargs):
         if not self.ma_phieu:
             last_phieu = XuatKho.objects.order_by('-id').first()
             if last_phieu:
-                last_number = int(last_phieu.ma_phieu.split('-')[-1])
+                # Lấy số cuối cùng trong chuỗi ma_phieu
+                match = re.search(r'(\d+)$', last_phieu.ma_phieu)
+                last_number = int(match.group(1)) if match else 0
                 self.ma_phieu = f'XK-{last_number + 1:04d}'
             else:
                 self.ma_phieu = 'XK-0001'
         super().save(*args, **kwargs)
-
-    class Meta:
-        verbose_name = "Phiếu xuất kho"
-        verbose_name_plural = "Phiếu xuất kho"
 
 
 class ChiTietXuatKho(models.Model):
@@ -184,27 +175,35 @@ class ChiTietXuatKho(models.Model):
     don_gia = models.DecimalField(max_digits=15, decimal_places=2)
     thanh_tien = models.DecimalField(max_digits=15, decimal_places=2, editable=False)
 
-    def save(self, *args, **kwargs):
-        self.thanh_tien = self.so_luong * self.don_gia
-        super().save(*args, **kwargs)
-
-        # Trừ tồn kho sản phẩm
-        if self.san_pham.ton_kho >= self.so_luong:
-            self.san_pham.ton_kho -= self.so_luong
-            self.san_pham.save()
-
-    def __str__(self):
-        return f"{self.san_pham.ten_san_pham} - {self.so_luong}"
-
     class Meta:
         verbose_name = "Chi tiết xuất kho"
         verbose_name_plural = "Chi tiết xuất kho"
 
+    def __str__(self):
+        return f"{self.san_pham.ten_san_pham} - {self.so_luong}"
 
-from django.db import models
-from django.conf import settings  # Thêm dòng này
-from products.models import SanPham  # Import model sản phẩm từ app products
+    def save(self, *args, **kwargs):
+        self.thanh_tien = self.so_luong * self.don_gia
 
+        # Bước 1: Lấy tồn kho
+        ton = TonKho.objects.filter(kho=self.phieu_xuat.kho, san_pham=self.san_pham).first()
+
+        # Bước 2: Kiểm tra tồn kho
+        if not ton or ton.so_luong_kha_dung < self.so_luong:
+            raise ValidationError(f"Sản phẩm {self.san_pham.ten_san_pham} không đủ tồn kho (còn {ton.so_luong_kha_dung if ton else 0})!")
+
+        # Bước 3: Lưu chi tiết xuất
+        super().save(*args, **kwargs)
+
+        # Bước 4: Giảm tồn kho
+        ton.so_luong_ton -= self.so_luong
+        ton.so_luong_kha_dung -= self.so_luong
+        ton.save()
+
+        # Bước 5: Cập nhật tổng tiền phiếu xuất
+        total = self.phieu_xuat.chi_tiet_xuat.aggregate(total=Sum('thanh_tien'))['total'] or 0
+        self.phieu_xuat.tong_tien = total
+        self.phieu_xuat.save()
 
 class KiemKe(models.Model):
     TRANG_THAI_CHON = [
