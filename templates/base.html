@@ -174,10 +174,7 @@
                 <a class="nav-link" href="/doi-tac/nha-cung-cap/">
                     <i class="fas fa-truck me-3"></i>Nhà cung cấp
                 </a>
-                <a class="nav-link" href="{% url 'inventory:danh_sach_kiem_ke' %}">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span>Kiểm kê kho</span>
-                </a>
+
             </nav>
 
             <div class="sidebar-footer mt-auto p-3">
@@ -199,27 +196,40 @@
                         <h5 class="mb-0 text-dark fw-bold">{% block page_title %}Dashboard{% endblock %}</h5>
                     </div>
 
-                    <div class="d-flex align-items-center">
-    <div class="dropdown">
-        <a href="#" class="dropdown-toggle text-dark text-decoration-none d-flex align-items-center"
-           id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"
-                 style="width: 35px; height: 35px;">
-                <i class="fas fa-user text-white"></i>
+            <div class="d-flex align-items-center">
+            <div class="dropdown">
+                <a href="#" class="dropdown-toggle text-dark text-decoration-none d-flex align-items-center"
+                   id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"
+                         style="width: 35px; height: 35px;">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                    <span class="me-2">{{ user.username }}</span>
+                    <i class="fas fa-chevron-down small"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                    <li><a class="dropdown-item" href="{% url 'settings:profile_detail' %}">
+                         <i class="fas fa-user me-2"></i>Hồ sơ
+                    </a></li>
+                    <li><a class="dropdown-item" href="{% url 'settings:profile' %}">
+                        <i class="fas fa-cog me-2"></i>Cài đặt
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                    <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
+                </a></li>
+                </ul>
+
+<!--                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">-->
+<!--                    <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Hồ sơ</a></li>-->
+<!--                    <li><a class="dropdown-item" href="{% url 'settings:profile' %}"><i class="fas fa-cog me-2"></i>Cài đặt</a></li>-->
+<!--                    <li><hr class="dropdown-divider"></li>-->
+<!--                    <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">-->
+<!--                        <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất-->
+<!--                    </a></li>-->
+                </ul>
             </div>
-            <span class="me-2">{{ user.username }}</span>
-            <i class="fas fa-chevron-down small"></i>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Hồ sơ</a></li>
-            <li><a class="dropdown-item" href="/profile/settings/"><i class="fas fa-cog me-2"></i>Cài đặt</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}">
-                <i class="fas fa-sign-out-alt me-2"></i>Đăng xuất
-            </a></li>
-        </ul>
-    </div>
-</div>
+        </div>
                 </div>
             </nav>
 
@@ -277,6 +287,10 @@
             });
         });
     </script>
+        <a class="nav-link {% if 'settings' in request.path %}active{% endif %}"
+            href="{% url 'settings:profile' %}">
+         <i class="fas fa-cog me-3"></i>Cài đặt
+        </a>
 
     {% block scripts %}
     {% endblock %}

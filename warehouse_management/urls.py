@@ -11,6 +11,7 @@ urlpatterns = [
     path('doi-tac/', include('partners.urls')),
     path('bao-cao/', include('reports.urls')),
     path('kiem-ke/', include('inventory.urls')),
+    path('settings_app/', include('settings_app.urls')),
 ]
 
 if settings.DEBUG:

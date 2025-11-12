@@ -65,7 +65,6 @@ def dashboard(request):
         'total_imports': 23,
         'total_exports': 45,
         'total_suppliers': 8,
-        'total_customers': 12,
         'inventory_value': 125000000,
         'monthly_revenue': 75000000,
         'chart_data': {

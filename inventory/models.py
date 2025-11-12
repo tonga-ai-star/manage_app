@@ -42,6 +42,8 @@ class Kho(models.Model):
     def __str__(self):
         return f"{self.ma_kho} - {self.ten_kho}"
 
+
+
 class TonKho(models.Model):
     kho = models.ForeignKey(Kho, on_delete=models.CASCADE, verbose_name="Kho")
     san_pham = models.ForeignKey('products.SanPham', on_delete=models.CASCADE, verbose_name="Sản phẩm")
@@ -145,6 +147,7 @@ class ChiTietNhapKho(models.Model):
     class Meta:
         verbose_name = "Chi tiết nhập kho"
         verbose_name_plural = "Chi tiết nhập kho"
+
 
 class XuatKho(models.Model):
     ma_phieu = models.CharField(max_length=50, unique=True)
