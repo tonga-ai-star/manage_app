@@ -126,20 +126,23 @@
             <a class="nav-link {% if 'xuat' in request.path %}active{% endif %}"
                href="{% url 'inventory:danh_sach_xuat' %}">
                 <i class="fas fa-arrow-up me-3"></i>Xuất kho
-            <!-- Tồn kho -->
-                <a class="nav-link {% if 'ton-kho' in request.path %}active{% endif %}"
-                   href="{% url 'inventory:chi_tiet_ton_kho' kho_id=1 %}">
-                    <i class="fas fa-warehouse me-3"></i>Tồn kho
-                </a>
-                <a class="nav-link {% if 'kiem-ke' in request.path %}active{% endif %}"
-                   href="{% url 'inventory:danh_sach_kiem_ke' %}">
-                    <i class="fas fa-clipboard-list me-3"></i>Kiểm kê
-                </a>
+            </a>
+            <a class="nav-link {% if 'ton-kho' in request.path %}active{% endif %}"
+               href="{% url 'inventory:chi_tiet_ton_kho' kho_id=1 %}">
+                <i class="fas fa-warehouse me-3"></i>Tồn kho
+            </a>
+            <a class="nav-link {% if 'kiem-ke' in request.path %}active{% endif %}"
+               href="{% url 'inventory:danh_sach_kiem_ke' %}">
+                <i class="fas fa-clipboard-list me-3"></i>Kiểm kê
+            </a>
             <a class="nav-link" href="/doi-tac/nha-cung-cap/">
                 <i class="fas fa-truck me-3"></i>Nhà cung cấp
             </a>
+            <a class="nav-link {% if 'debt' in request.path %}active{% endif %}"
+               href="{% url 'debt:congno_list' %}">
+                <i class="fas fa-file-invoice-dollar me-3"></i>Công nợ
+            </a>
         </nav>
-
         <div class="sidebar-footer mt-auto p-3 text-center">
             <small class="text-light opacity-75">Version 1.0</small>
         </div>

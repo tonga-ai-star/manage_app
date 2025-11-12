@@ -1,87 +1,57 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}Tạo Công nợ{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
             <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> {{ title }}</h4>
+                <div class="card-header">
+                    <h4 class="mb-0">Tạo Công nợ Mới</h4>
                 </div>
                 <div class="card-body">
-                    <form method="post" id="congno-form">
+                    <form method="post">
                         {% csrf_token %}
-                        
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.nha_cung_cap.id_for_label }}">Nhà cung cấp <span class="text-danger">*</span></label>
-                                    {{ form.nha_cung_cap }}
-                                    {% if form.nha_cung_cap.errors %}
-                                    <div class="text-danger small">{{ form.nha_cung_cap.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.loai_cong_no.id_for_label }}">Loại công nợ <span class="text-danger">*</span></label>
-                                    {{ form.loai_cong_no }}
-                                    {% if form.loai_cong_no.errors %}
-                                    <div class="text-danger small">{{ form.loai_cong_no.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nhà cung cấp</label>
+                            {{ form.nha_cung_cap }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Mã công nợ</label>
+                            {{ form.ma_cong_no }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Loại công nợ</label>
+                            {{ form.loai_cong_no }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Tên hàng hóa</label>
+                            {{ form.ten_hang_hoa }}
                         </div>
 
                         <div class="row">
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.phieu_nhap.id_for_label }}">Phiếu nhập (nếu có)</label>
-                                    {{ form.phieu_nhap }}
-                                    {% if form.phieu_nhap.errors %}
-                                    <div class="text-danger small">{{ form.phieu_nhap.errors }}</div>
-                                    {% endif %}
+                                <div class="mb-3">
+                                    <label class="form-label">Số lượng</label>
+                                    {{ form.so_luong }}
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.so_tien.id_for_label }}">Số tiền <span class="text-danger">*</span></label>
-                                    {{ form.so_tien }}
-                                    {% if form.so_tien.errors %}
-                                    <div class="text-danger small">{{ form.so_tien.errors }}</div>
-                                    {% endif %}
+                                <div class="mb-3">
+                                    <label class="form-label">Đơn giá (₫)</label>
+                                    {{ form.don_gia }}
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.han_thanh_toan.id_for_label }}">Hạn thanh toán <span class="text-danger">*</span></label>
-                                    {{ form.han_thanh_toan }}
-                                    {% if form.han_thanh_toan.errors %}
-                                    <div class="text-danger small">{{ form.han_thanh_toan.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.ghi_chu.id_for_label }}">Ghi chú</label>
-                                    {{ form.ghi_chu }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-4 border-top pt-3">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Lưu công nợ
-                            </button>
-                            <a href="{% url 'debt:congno_list' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i> Quay lại
-                            </a>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">Tạo công nợ</button>
+                            <a href="{% url 'debt:congno_list' %}" class="btn btn-secondary">Hủy</a>
                         </div>
                     </form>
                 </div>
@@ -89,31 +59,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block javascript %}
-<script>
-$(document).ready(function() {
-    // Khi chọn nhà cung cấp, load danh sách phiếu nhập
-    $('#id_nha_cung_cap').change(function() {
-        const nhaCungCapId = $(this).val();
-        if (nhaCungCapId) {
-            $.get(`/debt/api/phieu-nhap/${nhaCungCapId}/`, function(data) {
-                const phieuNhapSelect = $('#id_phieu_nhap');
-                phieuNhapSelect.empty();
-                phieuNhapSelect.append('<option value="">Chọn phiếu nhập</option>');
-                
-                data.forEach(function(phieu) {
-                    phieuNhapSelect.append(
-                        $('<option>', {
-                            value: phieu.id,
-                            text: `${phieu.ma_phieu} - ${phieu.tong_tien.toLocaleString('vi-VN')} VND`
-                        })
-                    );
-                });
-            });
-        }
-    });
-});
-</script>
 {% endblock %}

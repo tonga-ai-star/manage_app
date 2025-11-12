@@ -14,9 +14,9 @@ urlpatterns = [
     path('kho/', include('inventory.urls')),
     path('doi-tac/', include('partners.urls')),
     path('bao-cao/', include('reports.urls')),
-    path('kiem-ke/', include('inventory.urls')),
     path('settings_app/', include('settings_app.urls')),
     path('logout/', custom_logout, name='logout'),
+    path('debt/', include('debt.urls', namespace='debt')),
 ]
 
 if settings.DEBUG:
