@@ -217,7 +217,7 @@ class KiemKe(models.Model):
     ma_kiem_ke = models.CharField(max_length=50, unique=True, verbose_name="Mã kiểm kê")
     ten_dot_kiem_ke = models.CharField(max_length=200, verbose_name="Tên đợt kiểm kê")
     ngay_kiem_ke = models.DateTimeField(verbose_name="Ngày kiểm kê")
-    kho = models.CharField(max_length=100, verbose_name="Kho kiểm kê")
+    kho = models.ForeignKey(Kho, on_delete=models.CASCADE)
     nguoi_phu_trach = models.ForeignKey(
         settings.AUTH_USER_MODEL,  # Sửa thành này
         on_delete=models.CASCADE,

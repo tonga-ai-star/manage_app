@@ -3,55 +3,84 @@
 {% block title %}Danh sách kiểm kê{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <h2>Danh sách kiểm kê</h2>
-    
-    <div class="mb-3">
-        <a href="{% url 'inventory:tao_kiem_ke' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Tạo kiểm kê mới
-        </a>
-    </div>
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Danh sách kiểm kê</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <a href="{% url 'inventory:tao_kiem_ke' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Tạo kiểm kê mới
+                        </a>
+                    </div>
 
-    <div class="card">
-        <div class="card-body">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Mã kiểm kê</th>
-                        <th>Tên đợt kiểm kê</th>
-                        <th>Kho</th>
-                        <th>Ngày kiểm kê</th>
-                        <th>Trạng thái</th>
-                        <th>Người phụ trách</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for kiem_ke in danh_sach_kiem_ke %}
-                    <tr>
-                        <td>{{ kiem_ke.ma_kiem_ke }}</td>
-                        <td>{{ kiem_ke.ten_dot_kiem_ke }}</td>
-                        <td>{{ kiem_ke.kho }}</td>
-                        <td>{{ kiem_ke.ngay_kiem_ke|date:"d/m/Y" }}</td>
-                        <td>
-                            <span class="badge {% if kiem_ke.trang_thai == 'hoan_thanh' %}bg-success{% elif kiem_ke.trang_thai == 'dang_kiem_ke' %}bg-warning{% else %}bg-secondary{% endif %}">
-                                {{ kiem_ke.get_trang_thai_display }}
-                            </span>
-                        </td>
-                        <td>{{ kiem_ke.nguoi_phu_trach.get_full_name }}</td>
-                        <td>
-                            <a href="{% url 'inventory:chi_tiet_kiem_ke' kiem_ke.id %}" class="btn btn-sm btn-info">
-                                Chi tiết
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="7" class="text-center">Chưa có đợt kiểm kê nào</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    {% if messages %}
+                    <div class="mb-3">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mã kiểm kê</th>
+                                    <th>Tên đợt kiểm kê</th>
+                                    <th>Kho</th>
+                                    <th>Ngày kiểm kê</th>
+                                    <th>Trạng thái</th>
+                                    <th>Người phụ trách</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for kiem_ke in danh_sach_kiem_ke %}
+                                <tr>
+                                    <td class="fw-bold">{{ kiem_ke.ma_kiem_ke }}</td>
+                                    <td>{{ kiem_ke.ten_dot_kiem_ke }}</td>
+                                    <td>
+                                        {% if kiem_ke.kho and kiem_ke.kho.ten_kho %}
+                                            {{ kiem_ke.kho.ten_kho }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ kiem_ke.ngay_kiem_ke|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <span class="badge {% if kiem_ke.trang_thai == 'hoan_thanh' %}bg-success{% elif kiem_ke.trang_thai == 'dang_kiem' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ kiem_ke.get_trang_thai_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ kiem_ke.nguoi_phu_trach.get_full_name|default:kiem_ke.nguoi_phu_trach.username }}</td>
+                                    <td>
+                                        <a href="{% url 'inventory:chi_tiet_kiem_ke' kiem_ke.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>Chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="text-muted">
+                                            <i class="fas fa-clipboard-list fa-2x mb-2"></i>
+                                            <p>Chưa có đợt kiểm kê nào</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

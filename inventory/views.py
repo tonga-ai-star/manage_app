@@ -1,9 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.views.generic import ListView, DetailView
 from django.http import JsonResponse
-from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from .models import KiemKe, ChiTietKiemKe
 from .models import Kho, TonKho
@@ -13,6 +9,8 @@ from .models import NhapKho, ChiTietNhapKho, XuatKho, ChiTietXuatKho
 from .forms import NhapKhoForm, ChiTietNhapKhoFormSet, XuatKhoForm, ChiTietXuatKhoFormSet
 from .services import QuanLyTonKho
 from django.db import transaction
+from datetime import datetime, timedelta
+from debt.models import CongNo
 import json
 
 
@@ -71,11 +69,9 @@ def nhap_kho_detail(request, pk):
 
 def tao_cong_no_tu_dong(nhapkho):
     """Tự động tạo công nợ khi nhập hàng"""
-    from datetime import datetime, timedelta
-    from debt.models import CongNoNhaCungCap
 
     han_thanh_toan = datetime.now() + timedelta(days=30)
-    CongNoNhaCungCap.objects.create(
+    CongNo.objects.create(
         nha_cung_cap=nhapkho.nha_cung_cap,
         phieu_nhap=nhapkho,
         loai_cong_no='nhap_hang',
@@ -184,13 +180,22 @@ def get_product_info(request, product_id):
 # ======================
 # 📋 KIỂM KÊ
 # ======================
+
+from django.contrib import messages
+from django.db import OperationalError
+
 @login_required
 def danh_sach_kiem_ke(request):
-    danh_sach = KiemKe.objects.all().order_by('-ngay_tao')
+    try:
+        danh_sach = KiemKe.objects.all().order_by('-ngay_tao')
+    except OperationalError:
+        # Nếu có lỗi database, trả về danh sách rỗng
+        danh_sach = []
+        messages.error(request, 'Có lỗi database. Vui lòng chạy migrations.')
+
     return render(request, 'inventory/danh_sach_kiem_ke.html', {
         'danh_sach_kiem_ke': danh_sach
     })
-
 
 @login_required
 def tao_kiem_ke(request):
@@ -233,28 +238,52 @@ def tao_kiem_ke(request):
 
 @login_required
 def chi_tiet_kiem_ke(request, id):
-    kiem_ke = get_object_or_404(KiemKe, id=id)
+    try:
+        # Đảm bảo id là số nguyên
+        kiem_ke_id = int(id)
+        kiem_ke = get_object_or_404(KiemKe, id=kiem_ke_id)
+    except (ValueError, TypeError):
+        # Nếu không phải số, thử tìm bằng mã kiểm kê
+        try:
+            kiem_ke = get_object_or_404(KiemKe, ma_kiem_ke=id)
+        except:
+            messages.error(request, 'Không tìm thấy đợt kiểm kê')
+            return redirect('inventory:danh_sach_kiem_ke')
+
+    # Kiểm tra xem kho có phải là instance của Kho không
+    if not isinstance(kiem_ke.kho, Kho):
+        messages.error(request, 'Dữ liệu kho không hợp lệ')
+        return redirect('inventory:danh_sach_kiem_ke')
+
+    # Lấy danh sách sản phẩm
     san_phams = SanPham.objects.all()
 
     if request.method == 'POST':
         try:
             with transaction.atomic():
                 for san_pham in san_phams:
-                    so_luong_thuc_te = request.POST.get(f'so_luong_{san_pham.id}')
-                    if so_luong_thuc_te:
-                        so_luong_he_thong = QuanLyTonKho.kiem_tra_ton_kho(kiem_ke.kho, san_pham)['so_luong_ton']
+                    so_luong_thuc_te_key = f'so_luong_{san_pham.id}'
+                    so_luong_thuc_te = request.POST.get(so_luong_thuc_te_key)
 
+                    if so_luong_thuc_te and so_luong_thuc_te.strip():
+                        # Kiểm tra tồn kho
+                        ton_kho_info = QuanLyTonKho.kiem_tra_ton_kho(kiem_ke.kho, san_pham)
+                        so_luong_he_thong = ton_kho_info['so_luong_ton']
+                        so_luong_thuc_te_int = int(so_luong_thuc_te)
+
+                        # Tạo hoặc cập nhật chi tiết kiểm kê
                         chi_tiet, created = ChiTietKiemKe.objects.get_or_create(
                             kiem_ke=kiem_ke,
                             san_pham=san_pham,
                             defaults={
                                 'so_luong_he_thong': so_luong_he_thong,
-                                'so_luong_thuc_te': int(so_luong_thuc_te)
+                                'so_luong_thuc_te': so_luong_thuc_te_int
                             }
                         )
+
                         if not created:
                             chi_tiet.so_luong_he_thong = so_luong_he_thong
-                            chi_tiet.so_luong_thuc_te = int(so_luong_thuc_te)
+                            chi_tiet.so_luong_thuc_te = so_luong_thuc_te_int
                             chi_tiet.save()
 
                 kiem_ke.trang_thai = 'hoan_thanh'
@@ -266,16 +295,35 @@ def chi_tiet_kiem_ke(request, id):
         except Exception as e:
             messages.error(request, f'Có lỗi xảy ra: {str(e)}')
 
-    # Lấy tồn kho hiện tại cho từng sản phẩm
+    # Chuẩn bị dữ liệu cho template
+    chi_tiet_kiem_ke_list = []
     for san_pham in san_phams:
-        san_pham.so_luong_ton_hien_tai = QuanLyTonKho.kiem_tra_ton_kho(kiem_ke.kho, san_pham)['so_luong_ton']
+        # Kiểm tra tồn kho
+        try:
+            ton_kho_info = QuanLyTonKho.kiem_tra_ton_kho(kiem_ke.kho, san_pham)
+            so_luong_he_thong = ton_kho_info['so_luong_ton']
+        except:
+            so_luong_he_thong = 0
 
-    return render(request, 'inventory/chi_tiet_kiem_ke.html', {
+        # Lấy chi tiết kiểm kê hiện có
+        chi_tiet_existing = ChiTietKiemKe.objects.filter(
+            kiem_ke=kiem_ke,
+            san_pham=san_pham
+        ).first()
+
+        chi_tiet_kiem_ke_list.append({
+            'san_pham': san_pham,
+            'so_luong_he_thong': so_luong_he_thong,
+            'so_luong_thuc_te': chi_tiet_existing.so_luong_thuc_te if chi_tiet_existing else so_luong_he_thong,
+            'chenh_lech': chi_tiet_existing.chenh_lech if chi_tiet_existing else 0,
+            'ghi_chu': chi_tiet_existing.ghi_chu if chi_tiet_existing else ''
+        })
+
+    context = {
         'kiem_ke': kiem_ke,
-        'san_phams': san_phams
-    })
-
-
+        'chi_tiet_kiem_ke_list': chi_tiet_kiem_ke_list
+    }
+    return render(request, 'inventory/chi_tiet_kiem_ke.html', context)
 # ======================
 # 🏢 QUẢN LÝ KHO
 # ======================
