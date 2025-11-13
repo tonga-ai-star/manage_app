@@ -25,7 +25,6 @@ class CongNoDetailView(DetailView):
         context['lich_su_thanh_toan'] = self.object.lich_su_thanh_toan.all().order_by('-ngay_thanh_toan')
         return context
 
-
 def congno_create(request):
     if request.method == 'POST':
         form = CongNoForm(request.POST)

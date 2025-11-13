@@ -5,12 +5,12 @@ from django.db.models import Q
 from .models import NguoiDung
 from .forms import NguoiDungForm
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, F, FloatField
+from django.db.models import Sum, F
 from products.models import SanPham
 from inventory.models import NhapKho, XuatKho, TonKho
 from partners.models import NhaCungCap
-
-
+from django.db.models.functions import ExtractMonth
+from datetime import datetime
 
 @login_required
 def danh_sach_nhan_vien(request):
@@ -137,14 +137,17 @@ def dashboard(request):
     total_inventory = TonKho.objects.aggregate(t=Sum('so_luong_ton'))['t'] or 0
 
     # --- 3. Tổng giá trị tồn kho ---
-    inventory_value = TonKho.objects.aggregate(
-        total_value=Sum(F('so_luong_ton') * F('san_pham__gia_ban'))
-    )['total_value'] or 0
+    try:
+        inventory_value = TonKho.objects.aggregate(
+            total_value=Sum(F('so_luong_ton') * F('san_pham__gia_ban'))
+        )['total_value'] or 0
+    except:
+        inventory_value = 0
 
     # --- 4. Top sản phẩm tồn nhiều nhất ---
     top_products = (
         TonKho.objects.select_related('san_pham')
-        .values('san_pham__ten_san_pham')
+        .values('san_pham__ten_san_pham', 'san_pham__id')
         .annotate(tong_ton=Sum('so_luong_ton'))
         .order_by('-tong_ton')[:5]
     )
@@ -157,34 +160,98 @@ def dashboard(request):
     )
 
     # --- 6. Biểu đồ nhập - xuất theo tháng ---
+    current_year = datetime.now().year
+
     nhap_theo_thang = (
-        NhapKho.objects.values('ngay_tao__month')
+        NhapKho.objects.filter(ngay_tao__year=current_year)
+        .annotate(month=ExtractMonth('ngay_tao'))
+        .values('month')
         .annotate(tong=Sum('tong_tien'))
-        .order_by('ngay_tao__month')
+        .order_by('month')
     )
+
     xuat_theo_thang = (
-        XuatKho.objects.values('ngay_tao__month')
+        XuatKho.objects.filter(ngay_tao__year=current_year)
+        .annotate(month=ExtractMonth('ngay_tao'))
+        .values('month')
         .annotate(tong=Sum('tong_tien'))
-        .order_by('ngay_tao__month')
+        .order_by('month')
     )
 
-    labels = [f"Tháng {item['ngay_tao__month']}" for item in nhap_theo_thang]
-    import_data = [item['tong'] for item in nhap_theo_thang]
-    export_data = [item['tong'] for item in xuat_theo_thang]
+    # Tạo dữ liệu cho 12 tháng
+    labels = [f"Tháng {i}" for i in range(1, 13)]
+    import_data = [0] * 12
+    export_data = [0] * 12
 
-    # --- 7. Biểu đồ công nợ nhà cung cấp ---
-    cong_no_data = (
-        NhaCungCap.objects.values('ten_nha_cung_cap')
-        .annotate(tong_no=Sum('tong_no'))
-        .order_by('-tong_no')[:5]
-        if 'tong_no' in [f.name for f in NhaCungCap._meta.get_fields()]
-        else []
-    )
+    for item in nhap_theo_thang:
+        month_index = item['month'] - 1
+        if 0 <= month_index < 12:
+            import_data[month_index] = float(item['tong'] or 0)
 
-    debt_labels = [item['ten_nha_cung_cap'] for item in cong_no_data]
-    debt_values = [item['tong_no'] for item in cong_no_data]
+    for item in xuat_theo_thang:
+        month_index = item['month'] - 1
+        if 0 <= month_index < 12:
+            export_data[month_index] = float(item['tong'] or 0)
+    # --- 7. THÔNG TIN CÔNG NỢ - CÁCH 2 ---
+    try:
+        # Lọc theo tháng
+        selected_month = request.GET.get('month')
+        if selected_month:
+            selected_month = int(selected_month)
+        else:
+            selected_month = datetime.now().month
 
-    # --- 8. Gửi dữ liệu sang template ---
+        # Thử import model CongNo
+        try:
+            from debts.models import CongNo
+
+            # Query công nợ
+            debt_query = CongNo.objects.all()
+            if selected_month:
+                debt_query = debt_query.filter(ngay_tao__month=selected_month)
+
+            # Tính tổng công nợ (dựa trên trường phù hợp)
+            total_debt = 0
+            total_paid = 0
+
+            for cong_no in debt_query:
+                # Giả sử model có trường 'so_tien' và 'con_no'
+                if hasattr(cong_no, 'con_no') and cong_no.con_no > 0:
+                    total_debt += cong_no.con_no
+                if hasattr(cong_no, 'so_tien') and hasattr(cong_no, 'con_no'):
+                    total_paid += (cong_no.so_tien - cong_no.con_no)
+
+            # Đếm NCC có công nợ
+            total_suppliers_with_debt = debt_query.filter(con_no__gt=0).values('nha_cung_cap').distinct().count()
+
+        except ImportError:
+            # Fallback nếu không có model CongNo
+            total_debt = 0
+            total_paid = 0
+            total_suppliers_with_debt = 0
+
+    except Exception as e:
+        print(f"Lỗi tính công nợ: {e}")
+        total_debt = 0
+        total_paid = 0
+        total_suppliers_with_debt = 0
+
+
+    # --- 8. Thống kê tháng hiện tại ---
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+
+    imports_this_month = NhapKho.objects.filter(
+        ngay_tao__month=current_month,
+        ngay_tao__year=current_year
+    ).count()
+
+    exports_this_month = XuatKho.objects.filter(
+        ngay_tao__month=current_month,
+        ngay_tao__year=current_year
+    ).count()
+
+    # --- 9. Gửi dữ liệu sang template ---
     context = {
         'total_products': total_products,
         'total_suppliers': total_suppliers,
@@ -192,13 +259,20 @@ def dashboard(request):
         'total_exports': total_exports,
         'total_inventory': total_inventory,
         'inventory_value': inventory_value,
-        'top_products': top_products,
-        'low_stock': low_stock,
+        'top_products': list(top_products),
+        'low_stock': list(low_stock),
         'labels': labels,
         'import_data': import_data,
         'export_data': export_data,
-        'debt_labels': debt_labels,
-        'debt_values': debt_values,
+        'imports_this_month': imports_this_month,
+        'exports_this_month': exports_this_month,
+        'current_year': current_year,
+
+        # Thông tin công nợ mới
+        'total_debt': total_debt,
+        'total_paid': total_paid,
+        'total_suppliers_with_debt': total_suppliers_with_debt,
+        'selected_month': selected_month,
     }
 
     return render(request, 'dashboard.html', context)
