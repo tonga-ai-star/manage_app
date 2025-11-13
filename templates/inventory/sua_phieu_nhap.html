@@ -14,10 +14,6 @@
       </div>
       <div class="mb-3">
         <label class="form-label">Trạng thái</label>
-        <select name="trang_thai" class="form-select">
-          <option value="processing" {% if phieu.trang_thai =='processing' %}selected{% endif %}>Đang xử lý</option>
-          <option value="completed" {% if phieu.trang_thai =='completed' %}selected{% endif %}>Hoàn tất</option>
-        </select>
       </div>
       <button type="submit" class="btn btn-success">Lưu thay đổi</button>
       <a href="{% url 'danh_sach_nhap' %}" class="btn btn-secondary">Quay lại</a>

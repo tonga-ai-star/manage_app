@@ -70,6 +70,7 @@ class NhapKho(models.Model):
     tong_tien = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     ghi_chu = models.TextField(blank=True, null=True)
     ngay_tao = models.DateTimeField(auto_now_add=True)
+    trang_thai=models.CharField(max_length=20,default='chưa duyệt')
 
     class Meta:
         verbose_name = "Phiếu nhập kho"
@@ -81,16 +82,16 @@ class NhapKho(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.ma_phieu:
-            last_phieu = XuatKho.objects.order_by('-id').first()
+            last_phieu = NhapKho.objects.order_by('-id').first()
             if last_phieu:
                 match = re.search(r'(\d+)$', last_phieu.ma_phieu)
                 if match:
                     last_number = int(match.group(1))
                 else:
                     last_number = 0
-                self.ma_phieu = f'XK-{last_number + 1:04d}'
+                self.ma_phieu = f'NK-{last_number + 1:04d}'
             else:
-                self.ma_phieu = 'XK-0001'
+                self.ma_phieu = 'NK-0001'
         super().save(*args, **kwargs)
 
     def update_tong_tien(self):
