@@ -139,7 +139,8 @@ class ChiTietNhapKho(models.Model):
 
 class XuatKho(models.Model):
     ma_phieu = models.CharField(max_length=50, unique=True)
-    kho=models.ForeignKey(Kho, on_delete=models.CASCADE)
+    kho=models.ForeignKey(Kho, on_delete=models.CASCADE, related_name='phieu_xuat_kho')
+    kho_nhan=models.ForeignKey(Kho, on_delete=models.CASCADE, related_name='phieu_nhan_kho')
     ngay_xuat = models.DateTimeField(auto_now_add=True)
     nguoi_lap = models.ForeignKey(settings.AUTH_USER_MODEL,
                                   on_delete=models.CASCADE)  # SỬA THÀNH settings.AUTH_USER_MODEL
