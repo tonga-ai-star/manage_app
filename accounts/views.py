@@ -1,67 +1,15 @@
 
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-from products.models import SanPham
-from inventory.models import NhapKho, XuatKho
-from partners.models import NhaCungCap
-
-
-# @login_required
-# def dashboard(request):
-#     # Thống kê tổng quan
-#     total_products = SanPham.objects.count()
-#     total_suppliers = NhaCungCap.objects.count()
-#     total_customers = KhachHang.objects.count()
-#
-#     # Thống kê nhập xuất
-#     total_imports = NhapKho.objects.count()
-#     total_exports = XuatKho.objects.count()
-#
-#     # Tổng giá trị tồn kho
-#     inventory_value = SanPham.objects.aggregate(
-#         total_value=Sum('ton_kho')
-#     )['total_value'] or 0
-#
-#     # Doanh thu tháng (giả lập)
-#     monthly_revenue = 75000000
-#
-#     # Dữ liệu biểu đồ
-#     chart_data = {
-#         'labels': ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6'],
-#         'imports': [120, 150, 180, 90, 200, 170],
-#         'exports': [80, 100, 120, 110, 150, 130],
-#         'inventory': [500, 550, 610, 590, 640, 680]
-#     }
-#
-#     # Đơn hàng gần đây
-#     recent_exports = XuatKho.objects.order_by('-ngay_tao')[:5]
-#
-#     # Sản phẩm tồn kho thấp
-#     low_stock = SanPham.objects.filter(ton_kho__lt=10)[:5]
-#
-#     context = {
-#         'total_products': total_products,
-#         'total_imports': total_imports,
-#         'total_exports': total_exports,
-#         'total_suppliers': total_suppliers,
-#         'total_customers': total_customers,
-#         'inventory_value': inventory_value,
-#         'monthly_revenue': monthly_revenue,
-#         'chart_data': chart_data,
-#         'recent_exports': recent_exports,
-#         'low_stock': low_stock,
-#     }
-#
-#     return render(request, 'dashboard.html', context)
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from .models import NguoiDung
 from .forms import NguoiDungForm
-from django.shortcuts import redirect
-from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, F, FloatField
+from products.models import SanPham
+from inventory.models import NhapKho, XuatKho, TonKho
+from partners.models import NhaCungCap
+
 
 
 @login_required
@@ -175,33 +123,82 @@ def xoa_nhan_vien(request, nhan_vien_id):
         messages.success(request, 'Đã xóa nhân viên thành công!')
 
     return redirect('danh_sach_nhan_vien')
+
+
 @login_required
 def dashboard(request):
-    # DÙNG DỮ LIỆU GIẢ - KHÔNG TRUY VẤN DATABASE
-    context = {
-        'total_products': 156,
-        'total_imports': 23,
-        'total_exports': 45,
-        'total_suppliers': 8,
-        'inventory_value': 125000000,
-        'monthly_revenue': 75000000,
-        'chart_data': {
-            'labels': ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6'],
-            'imports': [120, 150, 180, 90, 200, 170],
-            'exports': [80, 100, 120, 110, 150, 130],
-            'inventory': [500, 550, 610, 590, 640, 680]
-        },
-        'recent_exports': [
-            {'ma_phieu': 'XK-001', 'khach_hang': 'Siêu thị Co.op Mart', 'tong_tien': 1500000},
-            {'ma_phieu': 'XK-002', 'khach_hang': 'Circle K', 'tong_tien': 850000},
-        ],
-        'low_stock': [
-            {'ten_san_pham': 'Bút bi đỏ', 'ton_kho': 5},
-            {'ten_san_pham': 'Vở 200 trang', 'ton_kho': 8},
-        ],
-    }
-    return render(request, 'dashboard.html', context)
+    # --- 1. Tổng quan ---
+    total_products = SanPham.objects.count()
+    total_suppliers = NhaCungCap.objects.count()
+    total_imports = NhapKho.objects.count()
+    total_exports = XuatKho.objects.count()
 
-def custom_logout(request):
-    logout(request)
-    return redirect('login')
+    # --- 2. Tổng tồn kho ---
+    total_inventory = TonKho.objects.aggregate(t=Sum('so_luong_ton'))['t'] or 0
+
+    # --- 3. Tổng giá trị tồn kho ---
+    inventory_value = TonKho.objects.aggregate(
+        total_value=Sum(F('so_luong_ton') * F('san_pham__gia_ban'))
+    )['total_value'] or 0
+
+    # --- 4. Top sản phẩm tồn nhiều nhất ---
+    top_products = (
+        TonKho.objects.select_related('san_pham')
+        .values('san_pham__ten_san_pham')
+        .annotate(tong_ton=Sum('so_luong_ton'))
+        .order_by('-tong_ton')[:5]
+    )
+
+    # --- 5. Sản phẩm sắp hết hàng ---
+    low_stock = (
+        TonKho.objects.select_related('san_pham')
+        .filter(so_luong_ton__lte=5)
+        .order_by('so_luong_ton')[:5]
+    )
+
+    # --- 6. Biểu đồ nhập - xuất theo tháng ---
+    nhap_theo_thang = (
+        NhapKho.objects.values('ngay_tao__month')
+        .annotate(tong=Sum('tong_tien'))
+        .order_by('ngay_tao__month')
+    )
+    xuat_theo_thang = (
+        XuatKho.objects.values('ngay_tao__month')
+        .annotate(tong=Sum('tong_tien'))
+        .order_by('ngay_tao__month')
+    )
+
+    labels = [f"Tháng {item['ngay_tao__month']}" for item in nhap_theo_thang]
+    import_data = [item['tong'] for item in nhap_theo_thang]
+    export_data = [item['tong'] for item in xuat_theo_thang]
+
+    # --- 7. Biểu đồ công nợ nhà cung cấp ---
+    cong_no_data = (
+        NhaCungCap.objects.values('ten_nha_cung_cap')
+        .annotate(tong_no=Sum('tong_no'))
+        .order_by('-tong_no')[:5]
+        if 'tong_no' in [f.name for f in NhaCungCap._meta.get_fields()]
+        else []
+    )
+
+    debt_labels = [item['ten_nha_cung_cap'] for item in cong_no_data]
+    debt_values = [item['tong_no'] for item in cong_no_data]
+
+    # --- 8. Gửi dữ liệu sang template ---
+    context = {
+        'total_products': total_products,
+        'total_suppliers': total_suppliers,
+        'total_imports': total_imports,
+        'total_exports': total_exports,
+        'total_inventory': total_inventory,
+        'inventory_value': inventory_value,
+        'top_products': top_products,
+        'low_stock': low_stock,
+        'labels': labels,
+        'import_data': import_data,
+        'export_data': export_data,
+        'debt_labels': debt_labels,
+        'debt_values': debt_values,
+    }
+
+    return render(request, 'dashboard.html', context)
