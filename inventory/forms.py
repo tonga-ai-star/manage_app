@@ -75,8 +75,8 @@ ChiTietNhapKhoFormSet = inlineformset_factory(
     min_num=1,
     validate_min=True
 )
-class XuatKhoForm(forms.ModelForm):
 
+class XuatKhoForm(forms.ModelForm):
     class Meta:
         model = XuatKho
         fields = ['ma_phieu', 'ghi_chu']
@@ -90,13 +90,13 @@ class XuatKhoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
 class ChiTietXuatKhoForm(forms.ModelForm):
-
     class Meta:
         model = ChiTietXuatKho
-        fields = ['san_pham', 'so_luong']
+        fields = ['san_pham', 'so_luong']  # XÓA 'don_gia' khỏi đây
         widgets = {
             'san_pham': forms.Select(attrs={'class': 'form-select select2', 'style': 'width:100%'}),
             'so_luong': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            # XÓA widget cho 'don_gia'
         }
 
     def clean(self):
@@ -105,6 +105,7 @@ class ChiTietXuatKhoForm(forms.ModelForm):
         so_luong = cleaned_data.get('so_luong')
 
         if san_pham and so_luong:
+            # Kiểm tra tồn kho tổng
             if so_luong > san_pham.ton_kho:
                 raise forms.ValidationError(
                     f"Sản phẩm '{san_pham.ten_san_pham}' chỉ còn {san_pham.ton_kho} trong kho!"
@@ -118,4 +119,3 @@ ChiTietXuatKhoFormSet = inlineformset_factory(
     extra=1,
     can_delete=True
 )
-

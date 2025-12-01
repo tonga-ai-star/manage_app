@@ -2,7 +2,6 @@ from django.contrib import admin
 from .models import NhapKho, ChiTietNhapKho, XuatKho, ChiTietXuatKho
 from .models import KiemKe, ChiTietKiemKe
 from .models import Kho, TonKho
-from .forms import NhapKhoForm
 
 class ChiTietNhapKhoInline(admin.TabularInline):
     model = ChiTietNhapKho
@@ -12,22 +11,23 @@ class ChiTietNhapKhoInline(admin.TabularInline):
 
 @admin.register(NhapKho)
 class NhapKhoAdmin(admin.ModelAdmin):
-    form = NhapKhoForm
-    list_display = ['ma_phieu', 'ngay_nhap', 'nha_cung_cap','kho', 'tong_tien', 'nguoi_lap']
-    list_filter = ['ngay_nhap', 'nha_cung_cap', 'kho']
-    search_fields = ['ma_phieu', 'nha_cung_cap__ten_nha_cung_cap']
+    list_display = ['ma_phieu', 'kho', 'nha_cung_cap', 'nguoi_lap', 'ngay_nhap', 'trang_thai']
+    list_filter = ['kho', 'nha_cung_cap', 'trang_thai']
+    search_fields = ['ma_phieu', 'ghi_chu']
     inlines = [ChiTietNhapKhoInline]
 
 class ChiTietXuatKhoInline(admin.TabularInline):
     model = ChiTietXuatKho
     extra = 1
+    # CHỈ CÒN 2 TRƯỜNG VÌ ĐÃ XÓA don_gia và thanh_tien
     fields = ['san_pham', 'so_luong']
+    # XÓA: readonly_fields = ['thanh_tien']
 
 @admin.register(XuatKho)
 class XuatKhoAdmin(admin.ModelAdmin):
-    list_display = ['ma_phieu', 'ngay_xuat', 'kho', 'nguoi_lap']
-    list_filter = ['ngay_xuat', 'kho']
-    search_fields = ['ma_phieu']
+    list_display = ['ma_phieu', 'kho', 'kho_nhan', 'nguoi_lap', 'ngay_xuat']
+    list_filter = ['kho', 'kho_nhan', 'nguoi_lap']
+    search_fields = ['ma_phieu', 'ghi_chu']
     inlines = [ChiTietXuatKhoInline]
 
 @admin.register(ChiTietNhapKho)
@@ -37,9 +37,9 @@ class ChiTietNhapKhoAdmin(admin.ModelAdmin):
 
 @admin.register(ChiTietXuatKho)
 class ChiTietXuatKhoAdmin(admin.ModelAdmin):
+    # CHỈ CÒN 3 TRƯỜNG VÌ ĐÃ XÓA don_gia và thanh_tien
     list_display = ['phieu_xuat', 'san_pham', 'so_luong']
     list_filter = ['phieu_xuat', 'san_pham']
-
 
 class ChiTietKiemKeInline(admin.TabularInline):
     model = ChiTietKiemKe
@@ -56,6 +56,7 @@ class KiemKeAdmin(admin.ModelAdmin):
 class ChiTietKiemKeAdmin(admin.ModelAdmin):
     list_display = ['kiem_ke', 'san_pham', 'so_luong_he_thong', 'so_luong_thuc_te', 'chenh_lech']
     list_filter = ['kiem_ke']
+
 @admin.register(Kho)
 class KhoAdmin(admin.ModelAdmin):
     list_display = ['ma_kho', 'ten_kho', 'dia_chi', 'nguoi_quan_ly', 'trang_thai']

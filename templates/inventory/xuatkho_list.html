@@ -1,20 +1,18 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Danh sách xuất kho{% endblock %}
-{% block page_title %}📤 Danh sách phiếu xuất kho{% endblock %}
+{% block title %}Danh sách xuất kho nội bộ{% endblock %}
+{% block page_title %}📤 Danh sách phiếu xuất kho nội bộ{% endblock %}
 
 {% block content %}
 <div class="card table-custom h-100">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">Phiếu xuất kho</h5>
+        <h5 class="card-title mb-0">Phiếu xuất kho nội bộ</h5>
         <a href="{% url 'inventory:xuatkho_form' %}" class="btn btn-primary-custom">
-            <i class="fas fa-plus me-2"></i>Tạo phiếu xuất
+            <i class="fas fa-exchange-alt me-2"></i>Tạo phiếu xuất nội bộ
         </a>
     </div>
-
     <div class="card-body d-flex flex-column">
-
         <!-- Bộ lọc -->
         <div class="row mb-4">
             <div class="col-md-3">
@@ -24,7 +22,7 @@
                 <input type="date" class="form-control" placeholder="Đến ngày">
             </div>
             <div class="col-md-4">
-                <input type="text" class="form-control" placeholder="Tìm theo mã phiếu, khách hàng...">
+                <input type="text" class="form-control" placeholder="Tìm theo mã phiếu, kho...">
             </div>
             <div class="col-md-2">
                 <button class="btn btn-outline-primary w-100">
@@ -40,9 +38,9 @@
                     <tr>
                         <th class="text-white bg-dark">Mã phiếu</th>
                         <th class="text-white bg-dark">Ngày xuất</th>
-                        <th class="text-white bg-dark">Khách hàng</th>
+                        <th class="text-white bg-dark">Kho xuất</th>
+                        <th class="text-white bg-dark">Kho nhận</th>
                         <th class="text-white bg-dark">Số sản phẩm</th>
-                        <!-- ❌ XOÁ CỘT TỔNG TIỀN -->
                         <th class="text-white bg-dark">Người lập</th>
                         <th class="text-white bg-dark">Trạng thái</th>
                         <th class="text-white bg-dark">Thao tác</th>
@@ -51,39 +49,30 @@
                 <tbody>
                     {% for phieu in xuatkho_list %}
                     <tr>
-                        <td>
-                            <strong class="text-primary">{{ phieu.ma_phieu }}</strong>
-                        </td>
-
+                        <td><strong class="text-primary">{{ phieu.ma_phieu }}</strong></td>
                         <td>{{ phieu.ngay_xuat|date:"d/m/Y H:i" }}</td>
-
                         <td>
-                            <div class="fw-bold">{{ phieu.khach_hang.ten_khach_hang }}</div>
-                            <small class="text-muted">{{ phieu.khach_hang.dien_thoai }}</small>
+                            <div class="fw-bold">{{ phieu.kho.ten_kho }}</div>
+                            <small class="text-muted">{{ phieu.kho.ma_kho }}</small>
                         </td>
-
+                        <td>
+                            <div class="fw-bold">{{ phieu.kho_nhan.ten_kho }}</div>
+                            <small class="text-muted">{{ phieu.kho_nhan.ma_kho }}</small>
+                        </td>
                         <td>
                             <span class="badge bg-info rounded-pill">{{ phieu.chi_tiet_xuat.count }} SP</span>
                         </td>
-
-                        <!-- ❌ XOÁ Ô HIỂN THỊ TỔNG TIỀN -->
-
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2"
-                                     style="width: 30px; height: 30px;">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px;">
                                     <i class="fas fa-user text-white small"></i>
                                 </div>
                                 <span>{{ phieu.nguoi_lap.username }}</span>
                             </div>
                         </td>
-
                         <td>
-                            <span class="badge bg-success rounded-pill">
-                                <i class="fas fa-check me-1"></i>Hoàn thành
-                            </span>
+                            <span class="badge bg-success rounded-pill"><i class="fas fa-check me-1"></i>Hoàn thành</span>
                         </td>
-
                         <td>
                             <div class="btn-group">
                                 <a href="{% url 'inventory:xuat_kho_detail' phieu.pk %}" class="btn btn-sm btn-info" title="Xem chi tiết">
@@ -94,25 +83,22 @@
                                 </button>
                                 <form action="{% url 'inventory:xoa_phieu_xuat' phieu.pk %}" method="post" class="d-inline">
                                     {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger"
-                                            onclick="return confirm('Bạn có chắc muốn xóa phiếu này?');"
-                                            title="Xóa">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Bạn có chắc muốn xóa phiếu này?');" title="Xóa">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
                             </div>
                         </td>
                     </tr>
-
                     {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted" style="height: 400px;">
+                        <td colspan="8" class="text-center text-muted" style="height: 400px;">
                             <div class="d-flex flex-column justify-content-center align-items-center h-100">
-                                <i class="fas fa-outbox fa-3x mb-3 opacity-50"></i>
-                                <h5>Chưa có phiếu xuất kho nào</h5>
-                                <p class="mb-3">Hãy tạo phiếu xuất kho đầu tiên để quản lý</p>
+                                <i class="fas fa-exchange-alt fa-3x mb-3 opacity-50"></i>
+                                <h5>Chưa có phiếu xuất kho nội bộ nào</h5>
+                                <p class="mb-3 text-center">Hãy tạo phiếu xuất kho nội bộ đầu tiên</p>
                                 <a href="{% url 'inventory:xuatkho_form' %}" class="btn btn-primary-custom">
-                                    <i class="fas fa-plus me-2"></i>Tạo phiếu xuất đầu tiên
+                                    <i class="fas fa-exchange-alt me-2"></i>Tạo phiếu xuất nội bộ đầu tiên
                                 </a>
                             </div>
                         </td>
@@ -140,6 +126,81 @@
 </div>
 
 <style>
-/* giữ nguyên CSS của bạn */
+/* CSS để kéo dài bảng xuống hết trang */
+.table-custom {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+}
+
+.card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.table-responsive {
+    flex: 1;
+    min-height: 0;
+}
+
+.table {
+    margin-bottom: 0 !important;
+}
+
+/* Đảm bảo tbody chiếm hết không gian */
+.table tbody {
+    height: 100%;
+}
+
+/* Header table với nền đen và chữ trắng */
+.table thead th {
+    position: sticky;
+    top: 0;
+    background: #000000 !important;
+    color: #ffffff !important;
+    z-index: 10;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    padding: 12px 8px;
+}
+
+/* Đảm bảo chữ trắng cho tất cả thẻ th */
+.table thead th.text-white {
+    color: #ffffff !important;
+}
+
+/* Đảm bảo nền đen cho tất cả thẻ th */
+.table thead th.bg-dark {
+    background-color: #000000 !important;
+}
+
+/* Hover effect cho header */
+.table thead th:hover {
+    background: #333333 !important;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+    .table-custom {
+        min-height: calc(100vh - 150px);
+    }
+
+    .btn-group {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .btn-group .btn {
+        margin: 1px 0;
+    }
+
+    .table thead th {
+        padding: 8px 4px;
+        font-size: 14px;
+    }
+}
 </style>
 {% endblock %}

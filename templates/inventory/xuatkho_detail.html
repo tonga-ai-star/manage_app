@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Chi tiết phiếu xuất{% endblock %}
+{% block title %}Chi tiết phiếu xuất nội bộ{% endblock %}
 {% block page_title %}📄 Chi tiết phiếu xuất {{ phieu_xuat.ma_phieu }}{% endblock %}
 
 {% block content %}
 <div class="card shadow-sm border-0">
     <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
-        <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Thông tin phiếu xuất</h5>
+        <h5 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Thông tin phiếu xuất nội bộ</h5>
         <div>
             <a href="{% url 'inventory:xuatkho_list' %}" class="btn btn-light btn-sm">
                 <i class="fas fa-arrow-left me-1"></i>Quay lại danh sách
@@ -24,8 +24,8 @@
                 <p><strong>Người lập:</strong> {{ phieu_xuat.nguoi_lap.username }}</p>
             </div>
             <div class="col-md-6">
-                <p><strong>Khách hàng:</strong> {{ phieu_xuat.khach_hang.ten_khach_hang }}</p>
-                <p><strong>Số điện thoại:</strong> {{ phieu_xuat.khach_hang.dien_thoai }}</p>
+                <p><strong>Kho xuất:</strong> {{ phieu_xuat.kho.ten_kho }}</p>
+                <p><strong>Kho nhận:</strong> {{ phieu_xuat.kho_nhan.ten_kho }}</p>
                 <p><strong>Ghi chú:</strong> {{ phieu_xuat.ghi_chu|default:"Không có" }}</p>
             </div>
         </div>
@@ -36,38 +36,42 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
+                        <th>#</th>
                         <th>Sản phẩm</th>
+                        <th>Đơn vị</th>
                         <th class="text-center">Số lượng</th>
-                        <th class="text-end">Đơn giá</th>
-                        <th class="text-end">Thành tiền</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for ct in chi_tiet_xuat_list %}
+                    {% for ct in chi_tiet_list %}
                     <tr>
+                        <td>{{ forloop.counter }}</td>
                         <td>{{ ct.san_pham.ten_san_pham }}</td>
-                        <td class="text-center">{{ ct.so_luong }}</td>
-                        <td class="text-end">{{ ct.don_gia|floatformat:0 }}₫</td>
-                        <td class="text-end fw-bold text-success">{{ ct.thanh_tien|floatformat:0 }}₫</td>
+                        <td>{{ ct.san_pham.don_vi_tinh.ten_don_vi|default:"-" }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary rounded-pill px-3 py-2">{{ ct.so_luong }}</span>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="4" class="text-center text-muted py-4">
-                            <i class="fas fa-outbox fa-2x mb-2 opacity-50"></i><br>
+                            <i class="fas fa-exchange-alt fa-2x mb-2 opacity-50"></i><br>
                             Chưa có sản phẩm nào trong phiếu xuất này.
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
+                {% if chi_tiet_list %}
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="3" class="text-end"><strong>Tổng số lượng:</strong></td>
+                        <td class="text-center">
+                            <strong>{{ chi_tiet_list|length }} sản phẩm</strong>
+                        </td>
+                    </tr>
+                </tfoot>
+                {% endif %}
             </table>
-        </div>
-
-        <!-- Tổng tiền -->
-        <div class="d-flex justify-content-end mt-3">
-            <div class="text-end">
-                <h5 class="mb-1">Tổng tiền:</h5>
-                <h4 class="text-success fw-bold">{{ phieu_xuat.tong_tien|floatformat:0 }}₫</h4>
-            </div>
         </div>
 
         <!-- Nút hành động -->
@@ -75,7 +79,7 @@
             <a href="{% url 'inventory:xuatkho_list' %}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>Quay lại
             </a>
-            <button class="btn btn-warning">
+            <button class="btn btn-warning" onclick="window.print()">
                 <i class="fas fa-print me-1"></i>In phiếu
             </button>
             <form action="{% url 'inventory:xoa_phieu_xuat' phieu_xuat.id %}" method="post" class="d-inline">
@@ -87,4 +91,26 @@
         </div>
     </div>
 </div>
+
+<!-- CSS cho trang in -->
+<style>
+@media print {
+    .card-header, .btn, .navbar, .sidebar, footer {
+        display: none !important;
+    }
+
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .card-body {
+        padding: 0 !important;
+    }
+
+    h5 {
+        color: #000 !important;
+    }
+}
+</style>
 {% endblock %}
