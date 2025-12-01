@@ -27,23 +27,29 @@ class QuanLyTonKho:
     @transaction.atomic
     def xuat_hang(kho, san_pham, so_luong):
         """Xử lý xuất hàng từ kho"""
-        try:
-            ton_kho = TonKho.objects.get(kho=kho, san_pham=san_pham)
+        """Xử lý chuyển kho nội bộ"""
+        # 1. Xuất từ kho xuất
+        ton_xuat = QuanLyTonKho.xuat_hang(kho, san_pham, so_luong)
 
-            if ton_kho.so_luong_kha_dung < so_luong:
-                raise ValueError(
-                    f"Không đủ số lượng tồn kho. "
-                    f"Yêu cầu: {so_luong}, Tồn kho: {ton_kho.so_luong_kha_dung}"
-                )
+        # 2. Nhập vào kho nhận
+        ton_nhan, created = TonKho.objects.get_or_create(
+            kho=kho_nhan,
+            san_pham=san_pham,
+            defaults={
+                'so_luong_ton': so_luong,
+                'so_luong_kha_dung': so_luong
+            }
+        )
 
-            ton_kho.so_luong_ton -= so_luong
-            ton_kho.so_luong_kha_dung -= so_luong
-            ton_kho.save()
+        if not created:
+            ton_nhan.so_luong_ton += so_luong
+            ton_nhan.so_luong_kha_dung += so_luong
+            ton_nhan.save()
 
-            return ton_kho
-
-        except TonKho.DoesNotExist:
-            raise ValueError(f"Sản phẩm {getattr(san_pham, 'ten_san_pham', san_pham)} không tồn tại trong kho")
+        return {
+            'kho_xuat': ton_xuat,
+            'kho_nhan': ton_nhan
+        }
 
     @staticmethod
     def kiem_tra_ton_kho(kho, san_pham):

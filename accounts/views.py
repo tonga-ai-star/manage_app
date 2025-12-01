@@ -174,7 +174,6 @@ def dashboard(request):
         XuatKho.objects.filter(ngay_tao__year=current_year)
         .annotate(month=ExtractMonth('ngay_tao'))
         .values('month')
-        .annotate(tong=Sum('tong_tien'))
         .order_by('month')
     )
 
@@ -191,7 +190,7 @@ def dashboard(request):
     for item in xuat_theo_thang:
         month_index = item['month'] - 1
         if 0 <= month_index < 12:
-            export_data[month_index] = float(item['tong'] or 0)
+            export_data[month_index] = float(item.get('tong',0) or 0)
     # --- 7. THÔNG TIN CÔNG NỢ - CÁCH 2 ---
     try:
         # Lọc theo tháng

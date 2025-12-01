@@ -93,11 +93,10 @@ class ChiTietXuatKhoForm(forms.ModelForm):
 
     class Meta:
         model = ChiTietXuatKho
-        fields = ['san_pham', 'so_luong', 'don_gia']
+        fields = ['san_pham', 'so_luong']
         widgets = {
             'san_pham': forms.Select(attrs={'class': 'form-select select2', 'style': 'width:100%'}),
             'so_luong': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'don_gia': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
         }
 
     def clean(self):

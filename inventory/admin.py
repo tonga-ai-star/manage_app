@@ -21,12 +21,11 @@ class NhapKhoAdmin(admin.ModelAdmin):
 class ChiTietXuatKhoInline(admin.TabularInline):
     model = ChiTietXuatKho
     extra = 1
-    fields = ['san_pham', 'so_luong', 'don_gia', 'thanh_tien']
-    readonly_fields = ['thanh_tien']
+    fields = ['san_pham', 'so_luong']
 
 @admin.register(XuatKho)
 class XuatKhoAdmin(admin.ModelAdmin):
-    list_display = ['ma_phieu', 'ngay_xuat', 'kho', 'tong_tien', 'nguoi_lap']
+    list_display = ['ma_phieu', 'ngay_xuat', 'kho', 'nguoi_lap']
     list_filter = ['ngay_xuat', 'kho']
     search_fields = ['ma_phieu']
     inlines = [ChiTietXuatKhoInline]
@@ -38,7 +37,7 @@ class ChiTietNhapKhoAdmin(admin.ModelAdmin):
 
 @admin.register(ChiTietXuatKho)
 class ChiTietXuatKhoAdmin(admin.ModelAdmin):
-    list_display = ['phieu_xuat', 'san_pham', 'so_luong', 'don_gia', 'thanh_tien']
+    list_display = ['phieu_xuat', 'san_pham', 'so_luong']
     list_filter = ['phieu_xuat', 'san_pham']
 
 

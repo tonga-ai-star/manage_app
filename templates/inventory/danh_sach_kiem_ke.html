@@ -88,12 +88,6 @@
                                 <button class="btn btn-sm btn-warning" data-bs-toggle="tooltip" title="In phiếu">
                                     <i class="fas fa-print"></i>
                                 </button>
-                                {% if kiem_ke.trang_thai != 'hoan_thanh' %}
-                                <a href="{% url 'inventory:sua_kiem_ke' kiem_ke.id %}" class="btn btn-sm btn-primary"
-                                   data-bs-toggle="tooltip" title="Sửa">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                {% endif %}
                             </div>
                         </td>
                     </tr>

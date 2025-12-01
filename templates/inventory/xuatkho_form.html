@@ -13,6 +13,7 @@
                     <i class="fas fa-exchange-alt me-2"></i>Thông tin phiếu xuất
                 </h5>
             </div>
+
             <div class="card-body">
                 <form method="post" id="xuatKhoForm">
                     {% csrf_token %}
@@ -58,59 +59,42 @@
 
                         <div id="productDetails">
                             <div class="product-row row mb-3 border-bottom pb-3">
-                                <div class="col-md-4">
+
+                                <div class="col-md-5">
                                     <label class="form-label small fw-bold">Sản phẩm <span class="text-danger">*</span></label>
                                     <input type="text" name="ten_san_pham" class="form-control ten-san-pham"
                                            placeholder="Nhập tên sản phẩm..." list="sanPhamList" required>
+
                                     <datalist id="sanPhamList">
                                         {% for sp in san_pham_list %}
                                         <option value="{{ sp.ten_san_pham }}"
                                                 data-danhmuc="{{ sp.danh_muc.ten_danh_muc }}"
-                                                data-donvitinh="{{ sp.don_vi_tinh.ten_don_vi }}"
-                                                data-gianhap="{{ sp.gia_nhap|default:0 }}">
+                                                data-donvitinh="{{ sp.don_vi_tinh.ten_don_vi }}">
                                         {% endfor %}
                                     </datalist>
                                 </div>
-                                <div class="col-md-2">
+
+                                <div class="col-md-3">
                                     <label class="form-label small fw-bold">Danh mục</label>
                                     <input type="text" name="danh_muc" class="form-control danh-muc-input" readonly>
                                 </div>
+
                                 <div class="col-md-2">
                                     <label class="form-label small fw-bold">Đơn vị</label>
                                     <input type="text" name="don_vi_tinh" class="form-control don-vi-tinh-input" readonly>
                                 </div>
+
                                 <div class="col-md-2">
                                     <label class="form-label small fw-bold">Số lượng</label>
-                                    <input type="number" name="so_luong" class="form-control so-luong" min="1" required onchange="calculateTotal()">
+                                    <input type="number" name="so_luong" class="form-control so-luong" min="1" required>
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label small fw-bold">Đơn giá</label>
-                                    <input type="number" name="don_gia" class="form-control don-gia" min="0" step="0.01" required onchange="calculateTotal()">
-                                </div>
-                                <div class="col-md-1">
-                                    <label class="form-label small fw-bold">Thành tiền</label>
-                                    <input type="text" class="form-control total" value="0" readonly>
-                                </div>
-                                <div class="col-md-1">
-                                    <label class="form-label small text-white">.</label>
+
+                                <div class="col-md-1 mt-4">
                                     <button type="button" class="btn btn-danger btn-sm remove-product" disabled>
                                         <i class="fas fa-times"></i>
                                     </button>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Tổng tiền -->
-                    <div class="row mb-4">
-                        <div class="col-md-6 offset-md-6">
-                            <div class="card bg-light">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <strong class="fs-5">Tổng cộng:</strong>
-                                        <strong class="fs-4 text-success" id="grandTotal">0₫</strong>
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -130,7 +114,7 @@
         </div>
     </div>
 
-    <!-- Cột thống kê -->
+    <!-- Sidebar thống kê -->
     <div class="col-lg-4">
         <div class="card">
             <div class="card-header">
@@ -143,156 +127,68 @@
                 <div class="d-flex justify-content-between mb-2">
                     <span>Tổng số lượng:</span><strong id="totalQuantity">0</strong>
                 </div>
-                <hr>
-                <div class="d-flex justify-content-between">
-                    <span class="fw-bold">Tổng tiền:</span>
-                    <strong class="text-success" id="summaryTotal">0₫</strong>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
-
-
-
-
-
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
     const addBtn = document.getElementById('addProduct');
     const productDetails = document.getElementById('productDetails');
 
-    // Thêm dòng sản phẩm mới
+    // Thêm dòng
     addBtn.addEventListener('click', function() {
         const newRow = document.querySelector('.product-row').cloneNode(true);
-        const inputs = newRow.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.value = '';
-            input.removeAttribute('disabled');
-        });
-        newRow.querySelector('.remove-product').removeAttribute('disabled');
-        newRow.querySelector('.total').value = '0';
+        newRow.querySelectorAll('input').forEach(i => i.value = "");
+        newRow.querySelector('.remove-product').disabled = false;
         productDetails.appendChild(newRow);
         updateStatistics();
     });
 
-    // Xóa dòng sản phẩm
+    // Xoá dòng
     productDetails.addEventListener('click', function(e) {
         if (e.target.classList.contains('remove-product')) {
             if (document.querySelectorAll('.product-row').length > 1) {
                 e.target.closest('.product-row').remove();
-                calculateTotal();
                 updateStatistics();
             }
         }
     });
 
-    // Tự động điền thông tin khi chọn sản phẩm từ datalist
+    // Tự động điền danh mục + đơn vị
     productDetails.addEventListener('input', function(e) {
         if (e.target.classList.contains('ten-san-pham')) {
-            const productName = e.target.value;
+
             const row = e.target.closest('.product-row');
-            const danhMucInput = row.querySelector('.danh-muc-input');
-            const donViTinhInput = row.querySelector('.don-vi-tinh-input');
-            const donGiaInput = row.querySelector('.don-gia');
+            const productName = e.target.value;
 
-            if (productName) {
-                // Tìm sản phẩm trong datalist
-                const datalist = document.getElementById('sanPhamList');
-                const options = datalist.options;
-                let foundProduct = null;
+            const datalist = document.getElementById('sanPhamList');
+            const option = [...datalist.options].find(o => o.value === productName);
 
-                for (let option of options) {
-                    if (option.value === productName) {
-                        foundProduct = option;
-                        break;
-                    }
-                }
-
-                if (foundProduct && foundProduct.dataset.id) {
-                    // Tự động điền danh mục, đơn vị tính, giá nhập
-                    const danhMuc = foundProduct.dataset.danhmuc;
-                    const donViTinh = foundProduct.dataset.donvitinh;
-                    const giaNhap = foundProduct.dataset.gianhap;
-
-                    if (danhMuc && !danhMucInput.value) {
-                        danhMucInput.value = danhMuc;
-                    }
-
-                    if (donViTinh && !donViTinhInput.value) {
-                        donViTinhInput.value = donViTinh;
-                    }
-
-                    if (giaNhap && !donGiaInput.value) {
-                        donGiaInput.value = giaNhap;
-                    }
-                }
-
-                calculateTotal();
+            if (option) {
+                row.querySelector('.danh-muc-input').value = option.dataset.danhmuc || "";
+                row.querySelector('.don-vi-tinh-input').value = option.dataset.donvitinh || "";
             }
-        }
-    });
 
-    // Tính toán tổng tiền
-    window.calculateTotal = function() {
-        let grandTotal = 0;
-        document.querySelectorAll('.product-row').forEach(row => {
-            const quantity = parseFloat(row.querySelector('.so-luong').value) || 0;
-            const price = parseFloat(row.querySelector('.don-gia').value) || 0;
-            const total = quantity * price;
-            row.querySelector('.total').value = total.toLocaleString('vi-VN') + '₫';
-            grandTotal += total;
-        });
-        document.getElementById('grandTotal').textContent = grandTotal.toLocaleString('vi-VN') + '₫';
-        document.getElementById('summaryTotal').textContent = grandTotal.toLocaleString('vi-VN') + '₫';
-    };
-
-    // Cập nhật thống kê
-    window.updateStatistics = function() {
-        const productCount = document.querySelectorAll('.product-row').length;
-        let totalQuantity = 0;
-
-        document.querySelectorAll('.so-luong').forEach(input => {
-            totalQuantity += parseFloat(input.value) || 0;
-        });
-
-        document.getElementById('productCount').textContent = productCount;
-        document.getElementById('totalQuantity').textContent = totalQuantity;
-    };
-
-    // Khởi tạo
-    calculateTotal();
-    updateStatistics();
-
-    // Xử lý sự kiện input cho các field
-    document.addEventListener('input', function(e) {
-        if (e.target.classList.contains('so-luong') || e.target.classList.contains('don-gia')) {
-            calculateTotal();
             updateStatistics();
         }
     });
+
+    // Cập nhật thống kê
+    function updateStatistics() {
+        const rows = document.querySelectorAll('.product-row');
+
+        document.getElementById('productCount').textContent = rows.length;
+
+        let totalQty = 0;
+        rows.forEach(r => totalQty += parseFloat(r.querySelector('.so-luong').value) || 0);
+        document.getElementById('totalQuantity').textContent = totalQty;
+    }
+
+    document.addEventListener('input', updateStatistics);
 });
 </script>
 
-<style>
-.ten-san-pham:focus, .danh-muc-input:focus, .don-vi-tinh-input:focus, .so-luong:focus, .don-gia:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-}
-.product-row {
-    transition: all 0.3s ease;
-}
-.product-row:hover {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 10px;
-}
-.list-group-item {
-    border: none;
-    padding: 8px 0;
-}
-</style>
 {% endblock %}
-{{ block.super }}

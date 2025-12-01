@@ -143,8 +143,7 @@ class XuatKho(models.Model):
     kho_nhan=models.ForeignKey(Kho, on_delete=models.CASCADE, related_name='phieu_nhan_kho')
     ngay_xuat = models.DateTimeField(auto_now_add=True)
     nguoi_lap = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                  on_delete=models.CASCADE)  # SỬA THÀNH settings.AUTH_USER_MODEL
-    tong_tien = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+                                  on_delete=models.CASCADE)
     ghi_chu = models.TextField(blank=True, null=True)
     ngay_tao = models.DateTimeField(auto_now_add=True)
 
@@ -161,7 +160,6 @@ class XuatKho(models.Model):
         if not self.ma_phieu:
             last_phieu = XuatKho.objects.order_by('-id').first()
             if last_phieu:
-                # Lấy số cuối cùng trong chuỗi ma_phieu
                 match = re.search(r'(\d+)$', last_phieu.ma_phieu)
                 last_number = int(match.group(1)) if match else 0
                 self.ma_phieu = f'XK-{last_number + 1:04d}'
@@ -174,8 +172,6 @@ class ChiTietXuatKho(models.Model):
     phieu_xuat = models.ForeignKey(XuatKho, on_delete=models.CASCADE, related_name='chi_tiet_xuat')
     san_pham = models.ForeignKey(SanPham, on_delete=models.CASCADE)
     so_luong = models.IntegerField(validators=[MinValueValidator(1)])
-    don_gia = models.DecimalField(max_digits=15, decimal_places=2)
-    thanh_tien = models.DecimalField(max_digits=15, decimal_places=2, editable=False)
 
     class Meta:
         verbose_name = "Chi tiết xuất kho"
@@ -185,27 +181,25 @@ class ChiTietXuatKho(models.Model):
         return f"{self.san_pham.ten_san_pham} - {self.so_luong}"
 
     def save(self, *args, **kwargs):
-        self.thanh_tien = self.so_luong * self.don_gia
+        # Kiểm tra tồn kho
+        ton = TonKho.objects.filter(
+            kho=self.phieu_xuat.kho,
+            san_pham=self.san_pham
+        ).first()
 
-        # Bước 1: Lấy tồn kho
-        ton = TonKho.objects.filter(kho=self.phieu_xuat.kho, san_pham=self.san_pham).first()
-
-        # Bước 2: Kiểm tra tồn kho
         if not ton or ton.so_luong_kha_dung < self.so_luong:
-            raise ValidationError(f"Sản phẩm {self.san_pham.ten_san_pham} không đủ tồn kho (còn {ton.so_luong_kha_dung if ton else 0})!")
+            raise ValidationError(
+                f"Sản phẩm {self.san_pham.ten_san_pham} không đủ tồn kho "
+                f"(còn {ton.so_luong_kha_dung if ton else 0})!"
+            )
 
-        # Bước 3: Lưu chi tiết xuất
+        # Lưu chi tiết xuất trước
         super().save(*args, **kwargs)
 
-        # Bước 4: Giảm tồn kho
+        # Trừ tồn kho
         ton.so_luong_ton -= self.so_luong
         ton.so_luong_kha_dung -= self.so_luong
         ton.save()
-
-        # Bước 5: Cập nhật tổng tiền phiếu xuất
-        total = self.phieu_xuat.chi_tiet_xuat.aggregate(total=Sum('thanh_tien'))['total'] or 0
-        self.phieu_xuat.tong_tien = total
-        self.phieu_xuat.save()
 
 class KiemKe(models.Model):
     TRANG_THAI_CHON = [

@@ -18,10 +18,12 @@
                         <div class="col-auto">
                             <select name="month" id="month" class="form-select" onchange="this.form.submit()">
                                 <option value="">Tất cả các tháng</option>
-                                {% for i in "123456789101112" %}
-                                <option value="{{ forloop.counter }}" {% if selected_month == forloop.counter %}selected{% endif %}>
-                                    Tháng {{ forloop.counter }}
-                                </option>
+                                {% for month in "123456789101112"|make_list %}
+                                    {% if forloop.counter <= 12 %}
+                                    <option value="{{ forloop.counter }}" {% if selected_month == forloop.counter %}selected{% endif %}>
+                                        Tháng {{ forloop.counter }}
+                                    </option>
+                                    {% endif %}
                                 {% endfor %}
                             </select>
                         </div>
@@ -93,10 +95,10 @@
         </div>
     </div>
 
-    <!-- THÔNG TIN TỒN KHO VÀ CÔNG NỢ -->
+    <!-- THÔNG TIN TỒN KHO -->
     <div class="row mb-4">
         <!-- Top sản phẩm tồn kho -->
-        <div class="col-lg-4 mb-4">
+        <div class="col-lg-6 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-primary text-white">
                     <h5 class="card-title mb-0">🏆 Top sản phẩm tồn kho</h5>
@@ -123,7 +125,7 @@
         </div>
 
         <!-- Sản phẩm sắp hết hàng -->
-        <div class="col-lg-4 mb-4">
+        <div class="col-lg-6 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-warning text-white">
                     <h5 class="card-title mb-0">⚠️ Sản phẩm sắp hết hàng</h5>
@@ -148,46 +150,6 @@
                         <p class="mb-0">Tất cả sản phẩm đều có đủ tồn kho</p>
                     </div>
                     {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Báo cáo tổng quan công nợ -->
-        <div class="col-lg-4 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-danger text-white">
-                    <h5 class="card-title mb-0">💰 Báo cáo tổng quan công nợ</h5>
-                </div>
-                <div class="card-body">
-                    <div class="debt-summary">
-                        <div class="row text-center">
-                            <div class="col-6 mb-3">
-                                <div class="p-3 bg-light rounded">
-                                    <div class="h5 text-danger mb-1">{{ total_debt|floatformat:0 }}₫</div>
-                                    <small class="text-muted">Tổng công nợ</small>
-                                </div>
-                            </div>
-                            <div class="col-6 mb-3">
-                                <div class="p-3 bg-light rounded">
-                                    <div class="h5 text-success mb-1">{{ total_paid|floatformat:0 }}₫</div>
-                                    <small class="text-muted">Đã trả NCC</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="debt-stats mt-3">
-                            <div class="text-center">
-                                <div class="h4 mb-1">{{ total_suppliers_with_debt }}</div>
-                                <small class="text-muted">Nhà cung cấp có công nợ</small>
-                            </div>
-                        </div>
-
-                        {% if selected_month %}
-                        <div class="mt-3 p-2 bg-info text-white rounded text-center">
-                            <small>Đang xem dữ liệu tháng {{ selected_month }}/{{ current_year }}</small>
-                        </div>
-                        {% endif %}
-                    </div>
                 </div>
             </div>
         </div>
@@ -342,10 +304,6 @@ const nhapXuatChart = new Chart(nhapXuatCtx, {
     font-weight: 600;
 }
 
-.debt-summary .bg-light {
-    background-color: rgba(255, 255, 255, 0.9) !important;
-}
-
 .list-group-item {
     border: none;
     border-bottom: 1px solid #e3e6f0;
@@ -361,3 +319,4 @@ const nhapXuatChart = new Chart(nhapXuatCtx, {
 }
 </style>
 {% endblock %}
+

@@ -105,15 +105,16 @@ def nhap_kho_create(request):
                     )
 
                     # Cập nhật tồn kho
-                    ton, created = TonKho.objects.get_or_create(kho=kho, san_pham=sp)
-                    ton.so_luong_ton += sl
-                    ton.so_luong_kha_dung += sl
-                    ton.save()
+                    try:
+                        QuanLyTonKho.nhap_hang(kho, sp, sl)
+                    except Exception as e:
+                        messages.error(request, f"Lỗi cập nhật tồn kho: {e}")
+                        raise
 
                     tong_tien += sl * dg
 
-                nhapkho.tong_tien = tong_tien
-                nhapkho.save()
+                    nhapkho.tong_tien = tong_tien
+                    nhapkho.save()
 
                 # Tạo công nợ tự động
                 tao_cong_no_tu_dong(nhapkho)
@@ -162,12 +163,12 @@ def xoa_phieu_nhap(request, pk):
         return redirect('inventory:nhapkho_list')  # sửa tên url theo project của bạn
     return render(request, 'inventory/xoa_phieu_nhap.html', {'phieu': phieu})
 
-
 @login_required
 def danh_sach_xuat(request):
     xuatkho_list = XuatKho.objects.all().order_by('-ngay_xuat')
     context = {'xuatkho_list': xuatkho_list}
     return render(request, 'inventory/xuatkho_list.html', context)
+
 
 @login_required
 def xuat_kho_create(request):
@@ -180,6 +181,7 @@ def xuat_kho_create(request):
                 kho_nhan_id = request.POST.get('kho_nhan')
                 ghi_chu = request.POST.get('ghi_chu', '').strip()
 
+                # Kiểm tra kho
                 if not kho_xuat_id or not kho_nhan_id:
                     messages.error(request, "Vui lòng chọn cả kho xuất và kho nhận!")
                     return redirect('inventory:xuatkho_form')
@@ -191,27 +193,42 @@ def xuat_kho_create(request):
                     messages.error(request, "Kho xuất và kho nhận không được giống nhau!")
                     return redirect('inventory:xuatkho_form')
 
-                # --- Lấy danh sách sản phẩm và số lượng ---
+                # Lấy danh sách sản phẩm
                 ten_san_pham_list = request.POST.getlist('ten_san_pham')
                 so_luong_list = request.POST.getlist('so_luong')
-                don_gia_list = request.POST.getlist('don_gia')
 
-                # --- Bước 1: Kiểm tra tồn kho trước ---
+                # ============================
+                # 1️⃣ KIỂM TRA TỒN KHO TRƯỚC
+                # ============================
                 for i, ten_sp in enumerate(ten_san_pham_list):
                     if not ten_sp.strip():
                         continue
+
+                    # Tránh lỗi list index out of range
+                    if i >= len(so_luong_list):
+                        continue
+
                     try:
-                        sp = SanPham.objects.get(ten_san_pham=ten_sp)
                         sl = int(so_luong_list[i])
-                    except (ValueError, IndexError, SanPham.DoesNotExist):
+                        sp = SanPham.objects.get(ten_san_pham=ten_sp)
+                    except:
+                        continue
+
+                    if sl <= 0:
                         continue
 
                     ton = QuanLyTonKho.kiem_tra_ton_kho(kho_xuat, sp)
+
                     if ton['so_luong_kha_dung'] < sl:
-                        messages.error(request, f"Sản phẩm {sp.ten_san_pham} không đủ tồn kho (còn {ton['so_luong_kha_dung']})!")
+                        messages.error(
+                            request,
+                            f"Sản phẩm '{sp.ten_san_pham}' còn {ton['so_luong_kha_dung']} không đủ xuất {sl}!"
+                        )
                         return redirect('inventory:xuatkho_form')
 
-                # --- Bước 2: Tạo phiếu xuất ---
+                # ============================
+                # 2️⃣ TẠO PHIẾU XUẤT
+                # ============================
                 xuatkho = XuatKho.objects.create(
                     nguoi_lap=request.user,
                     kho=kho_xuat,
@@ -219,41 +236,43 @@ def xuat_kho_create(request):
                     ghi_chu=ghi_chu,
                     ngay_xuat=timezone.now()
                 )
+
                 # Sinh mã phiếu
                 last = XuatKho.objects.order_by('-id').first()
                 seq = (last.id + 1) if last else 1
                 xuatkho.ma_phieu = f"XKNB-{seq:04d}"
                 xuatkho.save()
 
-                # --- Bước 3: Lưu chi tiết và cập nhật tồn kho ---
-                tong_tien = Decimal('0')
+                # ============================
+                # 3️⃣ TẠO CHI TIẾT + CẬP NHẬT KHO
+                # ============================
                 for i, ten_sp in enumerate(ten_san_pham_list):
                     if not ten_sp.strip():
                         continue
-                    sp = SanPham.objects.get(ten_san_pham=ten_sp)
-                    sl = int(so_luong_list[i])
-                    dg = Decimal(don_gia_list[i])
+                    if i >= len(so_luong_list):
+                        continue
+                    try:
+                        sp = SanPham.objects.get(ten_san_pham=ten_sp)
+                        sl = int(so_luong_list[i])
+                    except:
+                        continue
 
-                    # Tạo chi tiết xuất
+                    if sl <= 0:
+                        continue
+
+                    # Tạo chi tiết xuất KHÔNG CÓ GIÁ TIỀN
                     ChiTietXuatKho.objects.create(
                         phieu_xuat=xuatkho,
                         san_pham=sp,
-                        so_luong=sl,
-                        don_gia=dg
+                        so_luong=sl
                     )
 
-                    # Trừ kho xuất
-                    QuanLyTonKho.xuat_hang(kho_xuat, sp, sl)
-                    # Cộng kho nhận
-                    ton_nhan, created = TonKho.objects.get_or_create(kho=kho_nhan, san_pham=sp)
-                    ton_nhan.so_luong_ton += sl
-                    ton_nhan.so_luong_kha_dung += sl
-                    ton_nhan.save()
-
-                    tong_tien += sl * dg
-
-                xuatkho.tong_tien = tong_tien
-                xuatkho.save()
+                    # Cập nhật kho xuất (trừ) và kho nhận (cộng)
+                    try:
+                        QuanLyTonKho.chuyen_kho(kho_xuat, kho_nhan, sp, sl)
+                    except ValueError as e:
+                        messages.error(request, f"Lỗi chuyển kho: {e}")
+                        raise  # Để transaction rollback
 
                 messages.success(request, f"Tạo phiếu xuất nội bộ {xuatkho.ma_phieu} thành công!")
                 return redirect('inventory:xuatkho_list')
@@ -261,6 +280,7 @@ def xuat_kho_create(request):
         except Exception as e:
             messages.error(request, f"Lỗi khi tạo phiếu xuất: {e}")
 
+    # GET request - hiển thị form
     context = {
         'san_pham_list': SanPham.objects.filter(trang_thai=True),
         'danh_muc_list': DanhMucSanPham.objects.all(),
@@ -268,6 +288,11 @@ def xuat_kho_create(request):
         'kho_list': kho_list,
     }
     return render(request, 'inventory/xuatkho_form.html', context)
+@login_required
+def danh_sach_xuat(request):
+    xuatkho_list = XuatKho.objects.all().order_by('-ngay_xuat')
+    context = {'xuatkho_list': xuatkho_list}
+    return render(request, 'inventory/xuatkho_list.html', context)
 
 
 def xuat_kho_detail(request, pk):
